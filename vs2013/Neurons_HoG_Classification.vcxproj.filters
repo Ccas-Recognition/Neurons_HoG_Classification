@@ -59,5 +59,8 @@
     <ClInclude Include="argvparser\argvparser.h">
       <Filter>bridge</Filter>
     </ClInclude>
+    <ClInclude Include="liblinear\linear.h">
+      <Filter>bridge</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

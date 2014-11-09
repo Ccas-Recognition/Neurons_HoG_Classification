@@ -86,8 +86,14 @@ class TClassifier {
 
         size_t number_of_features = features[0].first.size();
         assert(number_of_features > 0);
+		
+		std::cout << "number of samples: " << number_of_samples << std::endl;
+		std::cout << "number of features: " << number_of_features << std::endl;
 
+		vector<feature_node> data(number_of_samples*(number_of_features + 1));
+		//std::cout << "Setting up prob" << std::endl;
             // Description of one problem
+
         struct problem prob;
         prob.l = number_of_samples;
         prob.bias = -1;
@@ -98,7 +104,8 @@ class TClassifier {
             // Fill struct problem
         for (size_t sample_idx = 0; sample_idx < number_of_samples; ++sample_idx)
         {
-            prob.x[sample_idx] = new struct feature_node[number_of_features + 1];
+            //prob.x[sample_idx] = new struct feature_node[number_of_features + 1];
+			prob.x[sample_idx] = &(data[ sample_idx*(number_of_features + 1) ]);
             for (unsigned int feature_idx = 0; feature_idx < number_of_features; feature_idx++)
             {
                 prob.x[sample_idx][feature_idx].index = feature_idx + 1;
@@ -118,14 +125,16 @@ class TClassifier {
         param.weight = params_.weight;
 
             // Train model
+		//std::cout << "Train begin" << std::endl;
         *model = train(&prob, &param);
+		//std::cout << "Train end" << std::endl;
 
             // Clear param structure
         destroy_param(&param);
             // clear problem structure
         delete[] prob.y;
-        for (unsigned int sample_idx = 0; sample_idx < number_of_samples; ++sample_idx)
-            delete[] prob.x[sample_idx];
+       // for (unsigned int sample_idx = 0; sample_idx < number_of_samples; ++sample_idx)
+        //    delete[] prob.x[sample_idx];
         delete[] prob.x;
     }
 

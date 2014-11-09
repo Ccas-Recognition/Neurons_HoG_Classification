@@ -228,11 +228,14 @@ vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSi
             colorB[blockIndx] += (*image)(j, i)->Blue;
             colNum[blockIndx]++;
     }
-    for (size_t i = 0; i < colorR.size(); i++) {
-        one_image_features.push_back(colorR[i] / (255 * colNum[i]));
-        one_image_features.push_back(colorG[i] / (255 * colNum[i]));
-        one_image_features.push_back(colorB[i] / (255 * colNum[i]));
-    }
+	#if 0
+		for (size_t i = 0; i < colorR.size(); i++) 
+		{
+			one_image_features.push_back(colorR[i] / (255 * colNum[i]));
+			one_image_features.push_back(colorG[i] / (255 * colNum[i]));
+			one_image_features.push_back(colorB[i] / (255 * colNum[i]));
+		}
+	#endif
 
     /*
                           ___                          ______    ____  ___    ______   ___   _ 
@@ -245,9 +248,9 @@ vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSi
 
     vector<float> tmp;
 
-    const int n = 2;
-    const float L = 0.5;
-
+    const int n = 4;//2
+    const float L = 0.5; //0.5
+	
     for (size_t i = 0; i < one_image_features.size(); i++) {
         for (int j = -n; j <= n; j++) {
             auto x = phi(one_image_features[i], j * L);
@@ -255,13 +258,13 @@ vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSi
             tmp.push_back(x.second);
         }
     }
-
+	
     one_image_features.clear();
     return tmp;
 }
 
 // Exatract features from dataset.
-void ExtractFeatures(const TDataSet& data_set, TFeatures* features)
+void ExtractFeatures(const TFileList& file_list, TFeatures* features)
 {
     /*
         ____                      _       __                ______                   ______   _____ _ 
@@ -271,19 +274,26 @@ void ExtractFeatures(const TDataSet& data_set, TFeatures* features)
     /_____/\___/____/\___/_/  /_/ .___/\__/\____/_/       /_/ /_/   \___/\___/  / / /____(_)____//_/  
                                /_/                                              |_|            /_/    
     */
-    const vector<int> blockSizeX = {4, 8, 8, 16};
-    const vector<int> blockSizeY = {4, 6, 8, 8};
-    const int dirSegSize(32);
+	const vector<int> blockSizeX = { 4, 6 };//{4, 6};
+	const vector<int> blockSizeY = { 4, 6 };//{4, 6};
+	const int dirSegSize(8);//(8);
     const int treeDepth(blockSizeX.size());
-    for (size_t image_idx = 0; image_idx < data_set.size(); ++image_idx) {
+	for (size_t image_idx = 0; image_idx < file_list.size(); ++image_idx) {
         vector<float> one_image_features;
-        for (int i = 0; i < treeDepth; i++) {
-            auto tmp = HOG(blockSizeX[i], blockSizeY[i], dirSegSize, data_set[image_idx].first);
+        for (int i = 0; i < treeDepth; i++) 
+		{
+			BMP image;
+			// Read image from file
+			image.ReadFromFile(file_list[image_idx].first.c_str());
+			// Add image and it's label to dataset
+			//data_set->push_back(make_pair(image, file_list[image_idx].second));
+
+			auto tmp = HOG(blockSizeX[i], blockSizeY[i], dirSegSize, &image);
             for (size_t k = 0; k < tmp.size(); k++) {
                 one_image_features.push_back(tmp[k]);
             }
         }
-        features->push_back(make_pair(one_image_features, data_set[image_idx].second));
+		features->push_back(make_pair(one_image_features, file_list[image_idx].second));
     }
 }
 /*
@@ -321,9 +331,11 @@ void TrainClassifier(const string& data_file, const string& model_file) {
         // Load list of image file names and its labels
     LoadFileList(data_file, &file_list);
         // Load images
-    LoadImages(file_list, &data_set);
+    //LoadImages(file_list, &data_set);
         // Extract features from images
-    ExtractFeatures(data_set, &features);
+	std::cout << "Extract Features... ";
+	ExtractFeatures(file_list, &features);
+	std::cout << "done" << std::endl;
 
         // PLACE YOUR CODE HERE
         // You can change parameters of classifier here
@@ -334,7 +346,7 @@ void TrainClassifier(const string& data_file, const string& model_file) {
         // Save model to file
     model.Save(model_file);
         // Clear dataset structure
-    ClearDataset(&data_set);
+    //ClearDataset(&data_set);
 }
 
 // Predict data from 'data_file' using model from 'model_file' and
@@ -345,7 +357,7 @@ void PredictData(const string& data_file,
         // List of image file names and its labels
     TFileList file_list;
         // Structure of images and its labels
-    TDataSet data_set;
+    //TDataSet data_set;
         // Structure of features of images and its labels
     TFeatures features;
         // List of image labels
@@ -354,9 +366,11 @@ void PredictData(const string& data_file,
         // Load list of image file names and its labels
     LoadFileList(data_file, &file_list);
         // Load images
-    LoadImages(file_list, &data_set);
+    //LoadImages(file_list, &data_set);
         // Extract features from images
-    ExtractFeatures(data_set, &features);
+	std::cout << "Extract Features... "; 
+	ExtractFeatures(file_list, &features);
+	std::cout << "done" << std::endl;
 
         // Classifier 
     TClassifier classifier = TClassifier(TClassifierParams());
@@ -371,7 +385,7 @@ void PredictData(const string& data_file,
         // Save predictions
     SavePredictions(file_list, labels, prediction_file);
         // Clear dataset structure
-    ClearDataset(&data_set);
+    //ClearDataset(&data_set);
 }
 
 int main(int argc, char** argv) {
