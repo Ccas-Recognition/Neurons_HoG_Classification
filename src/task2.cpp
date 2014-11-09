@@ -274,8 +274,8 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features)
     /_____/\___/____/\___/_/  /_/ .___/\__/\____/_/       /_/ /_/   \___/\___/  / / /____(_)____//_/  
                                /_/                                              |_|            /_/    
     */
-	const vector<int> blockSizeX = { 4, 6 };//{6};
-	const vector<int> blockSizeY = { 4, 6 };//{6};
+	const vector<int> blockSizeX = { 2, 6 };//{6};
+	const vector<int> blockSizeY = { 2, 6 };//{6};
 	const int dirSegSize(8);//(8);
     const int treeDepth(blockSizeX.size());
 	for (size_t image_idx = 0; image_idx < file_list.size(); ++image_idx) {
