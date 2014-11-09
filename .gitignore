@@ -4,7 +4,10 @@ bridge/lib/*
 externals/*
 bridge.touch
 model_binary.txt
-data/neuron/bg
-data/neuron/fg
-data/neuron/new
 *.o
+data/neuron/*
+vs2013/Debug/*
+vs2013/Release/*
+*.opensdf
+*.sdf
+*.suo
