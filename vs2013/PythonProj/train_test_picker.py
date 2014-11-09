@@ -6,8 +6,13 @@ import cv2
 ftest = open("../../data/neuron/test.txt", "w")
 ftrain = open("../../data/neuron/train.txt", "w")
 
-sampling_count = 8000
-training_count = 4500
+if 1:
+    sampling_count = 8000
+    training_count = 4500
+else:
+    sampling_count = 1000
+    training_count = 500
+
 training_data_dir_txt = 'training_data/'
 training_data_dir = '../../data/neuron/training_data/'
 

@@ -148,6 +148,8 @@ class TClassifier {
 
             // Fill struct problem
         struct feature_node* x = new struct feature_node[number_of_features + 1];
+
+		//std::ofstream outfile("dump.txt");
         for (size_t sample_idx = 0; sample_idx < features.size(); ++sample_idx) {
             for (unsigned int feature_idx = 0; feature_idx < number_of_features; ++feature_idx) {
                 x[feature_idx].index = feature_idx + 1;
@@ -156,6 +158,9 @@ class TClassifier {
             x[number_of_features].index = -1;
                 // Add predicted label to labels structure
             labels->push_back(predict(model.get(), x));
+			//double arr[2];
+			//predict_values(model.get(), x, arr);
+			//outfile << labels->back() << " " << arr[0] << " " << arr[1] << std::endl;
         }
     }
 };
