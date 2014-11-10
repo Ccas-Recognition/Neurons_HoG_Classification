@@ -6,7 +6,7 @@ import cv2
 ftest = open("../../data/neuron/test.txt", "w")
 ftrain = open("../../data/neuron/train.txt", "w")
 
-if 1:
+if 0:
     sampling_count = 4915
     training_count = 4300
 else:

@@ -17,7 +17,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
@@ -52,12 +52,16 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../include;../EasyBMP;../liblinear;../argvparser</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../include;../EasyBMP;../liblinear;../argvparser;$(OPENCV_DIR)\..\..\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>opencv_core249d.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OPENCV_DIR)\lib</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -68,7 +72,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../include;../EasyBMP;../liblinear;../argvparser</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../include;../EasyBMP;../liblinear;../argvparser;$(OPENCV_DIR)\..\..\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -76,12 +80,16 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <Lib>
+      <AdditionalDependencies>opencv_core249.lib;opencv_highgui249.lib;</AdditionalDependencies>
+    </Lib>
+    <Lib>
+      <AdditionalLibraryDirectories>$(OPENCV_DIR)\lib</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\HOG.cpp" />
-    <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\argvparser\argvparser.cpp" />
-    <ClCompile Include="..\EasyBMP\EasyBMP.cpp" />
     <ClCompile Include="..\liblinear\blas\daxpy.c" />
     <ClCompile Include="..\liblinear\blas\ddot.c" />
     <ClCompile Include="..\liblinear\blas\dnrm2.c" />
@@ -91,14 +99,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\classifier.h" />
-    <ClInclude Include="..\..\include\matrix.h" />
-    <ClInclude Include="..\..\include\matrix.hpp" />
     <ClInclude Include="..\..\src\HOG.h" />
     <ClInclude Include="..\argvparser\argvparser.h" />
-    <ClInclude Include="..\EasyBMP\EasyBMP.h" />
-    <ClInclude Include="..\EasyBMP\EasyBMP_BMP.h" />
-    <ClInclude Include="..\EasyBMP\EasyBMP_DataStructures.h" />
-    <ClInclude Include="..\EasyBMP\EasyBMP_VariousBMPutilities.h" />
     <ClInclude Include="..\liblinear\blas\blas.h" />
     <ClInclude Include="..\liblinear\blas\blasp.h" />
     <ClInclude Include="..\liblinear\linear.h" />

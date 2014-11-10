@@ -24,9 +24,6 @@
     <ClCompile Include="..\..\src\HOG.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\argvparser\argvparser.cpp">
       <Filter>bridge</Filter>
     </ClCompile>
@@ -40,9 +37,6 @@
       <Filter>bridge</Filter>
     </ClCompile>
     <ClCompile Include="..\liblinear\blas\dscal.c">
-      <Filter>bridge</Filter>
-    </ClCompile>
-    <ClCompile Include="..\EasyBMP\EasyBMP.cpp">
       <Filter>bridge</Filter>
     </ClCompile>
     <ClCompile Include="..\liblinear\tron.cpp">
@@ -59,18 +53,6 @@
     <ClInclude Include="..\liblinear\blas\blasp.h">
       <Filter>bridge</Filter>
     </ClInclude>
-    <ClInclude Include="..\EasyBMP\EasyBMP.h">
-      <Filter>bridge</Filter>
-    </ClInclude>
-    <ClInclude Include="..\EasyBMP\EasyBMP_BMP.h">
-      <Filter>bridge</Filter>
-    </ClInclude>
-    <ClInclude Include="..\EasyBMP\EasyBMP_DataStructures.h">
-      <Filter>bridge</Filter>
-    </ClInclude>
-    <ClInclude Include="..\EasyBMP\EasyBMP_VariousBMPutilities.h">
-      <Filter>bridge</Filter>
-    </ClInclude>
     <ClInclude Include="..\liblinear\tron.h">
       <Filter>bridge</Filter>
     </ClInclude>
@@ -81,12 +63,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\liblinear\linear.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\matrix.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\matrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

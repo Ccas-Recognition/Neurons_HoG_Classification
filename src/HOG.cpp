@@ -1,11 +1,3 @@
-/*
-________      __  _____  _______       _____________
-____  _________  ____ _____  ____  / __/ __/     /  |/  /  |/  / __ \     |__  <  /__  /  ____ __________  __  ______
-/ __ \/ ___/ __ \/ __ `/ __ \/ __ \/ /_/ /_      / /|_/ / /|_/ / /_/ /      /_ </ /  / /  / __ `/ ___/ __ \/ / / / __ \
-_/ /_/ (__  ) /_/ / /_/ / / / / /_/ / __/ __/_    / /  / / /  / / ____/     ___/ / /  / /  / /_/ / /  / /_/ / /_/ / /_/ /
-(_)____/____/ .___/\__,_/_/ /_/\____/_/ /_/  ( )  /_/  /_/_/  /_/_/   ( )   /____/_/  /_/   \__, /_/   \____/\__,_/ .___/
-/_/                               |/                       |/                   /____/                /_/
-*/
 
 #include "HOG.h"
 
@@ -35,18 +27,6 @@ void LoadFileList(const string& data_file, TFileList* file_list) {
 	stream.close();
 }
 
-// Load images by list of files 'file_list' and store them in 'data_set'
-void LoadImages(const TFileList& file_list, TDataSet* data_set) {
-	for (size_t img_idx = 0; img_idx < file_list.size(); ++img_idx) {
-		// Create image
-		BMP* image = new BMP();
-		// Read image from file
-		image->ReadFromFile(file_list[img_idx].first.c_str());
-		// Add image and it's label to dataset
-		data_set->push_back(make_pair(image, file_list[img_idx].second));
-	}
-}
-
 // Save result of prediction to file
 void SavePredictions(const TFileList& file_list,
 	const TLabels& labels,
@@ -62,24 +42,15 @@ void SavePredictions(const TFileList& file_list,
 	stream.close();
 }
 
-/*
-_____ __             __           ____                                     __
-/ ___// /_____ ______/ /_   ____  / __/  ____ ___  __  __   _________  ____/ /__
-\__ \/ __/ __ `/ ___/ __/  / __ \/ /_   / __ `__ \/ / / /  / ___/ __ \/ __  / _ \
-___/ / /_/ /_/ / /  / /_   / /_/ / __/  / / / / / / /_/ /  / /__/ /_/ / /_/ /  __/
-/____/\__/\__,_/_/   \__/   \____/_/    /_/ /_/ /_/\__, /   \___/\____/\__,_/\___/
-/____/
-*/
-
 // Making grayscale image (3.1)
-Matrix<int> toGreyScale(BMP *in)
+Mat toGreyScale(const Mat &in)
 {
-	Matrix<int> img(in->TellHeight(), in->TellWidth());
-	for (int i = 0; i < in->TellHeight(); i++)
-	for (int j = 0; j < in->TellWidth(); j++) {
-		img(i, j) = static_cast<int>(0.299 * (*in)(j, i)->Red +
-			0.587 * (*in)(j, i)->Green +
-			0.114 * (*in)(j, i)->Blue);
+	Mat img(in.rows, in.cols, CV_8UC1);
+	for (int i = 0; i < in.rows; i++)
+	for (int j = 0; j < in.cols; j++) {
+		img.at<uchar>(i, j) = int(0.299 * in.at<Vec3b>(i, j).val[2] +
+			0.587 * in.at<Vec3b>(i, j).val[1] +
+			0.114 * in.at<Vec3b>(i, j).val[0] );
 	}
 
 	return img;
@@ -88,39 +59,37 @@ Matrix<int> toGreyScale(BMP *in)
 // Making matrixes of x and y parts of gradient (3.2)
 // Sobel by unary map gives worse result at all
 // so here hand-made sobel filter
-pair<Matrix<int>, Matrix<int>> countSobel(BMP *in)
+Mat countSobel(const Mat &in)
 {
-	Matrix<int> img(toGreyScale(in));
-	Matrix<int> sobelX(toGreyScale(in));
-	Matrix<int> sobelY(toGreyScale(in));
+	Mat img = toGreyScale(in);
+	Mat sobel(in.rows, in.cols, CV_16SC2);
 
-	int rows = static_cast<int>(sobelX.n_rows);
-	int cols = static_cast<int>(sobelX.n_cols);
+	int rows = int(in.rows);
+	int cols = int(in.cols);
 	for (int i = 0; i < rows; i++)
 	for (int j = 0; j < cols; j++) {
-		sobelY(i, j) = ((i > 0) ? img(i - 1, j) : 0) - ((i < rows - 1) ? img(i + 1, j) : 0);
-		sobelX(i, j) = ((j < cols - 1) ? img(i, j + 1) : 0) - ((j > 0) ? img(i, j - 1) : 0);
+		sobel.at<Vec2s>(i, j).val[1] = ((i > 0) ? img.at<uchar>(i - 1, j) : 0) - ((i < rows - 1) ? img.at<uchar>(i + 1, j) : 0);
+		sobel.at<Vec2s>(i, j).val[0] = ((j < cols - 1) ? img.at<uchar>(i, j + 1) : 0) - ((j > 0) ? img.at<uchar>(i, j - 1) : 0);
 	}
 
-	return make_pair(sobelX, sobelY);
+	return sobel;
 }
 
 // Counting module and direction of gradients (3.3)
-pair<Matrix<float>, Matrix<float>> countModAndDirOfGrad(BMP *in)
+Mat countModAndDirOfGrad(const Mat &in)
 {
-	auto sobel = countSobel(in);
-	Matrix<float> module(sobel.first.n_rows, sobel.first.n_cols);
-	Matrix<float> direction(sobel.first.n_rows, sobel.first.n_cols);
+	Mat sobel = countSobel(in);
+	Mat module_direction(sobel.rows, sobel.cols, CV_32FC2);
 
-	for (size_t i = 0; i < sobel.first.n_rows; i++)
-	for (size_t j = 0; j < sobel.first.n_cols; j++) {
-		auto x = sobel.first(i, j);
-		auto y = sobel.second(i, j);
-		module(i, j) = sqrt(x*x + y*y);
-		direction(i, j) = atan2(y, x);
+	for (size_t i = 0; i < sobel.rows; i++)
+	for (size_t j = 0; j < sobel.cols; j++) {
+		auto x = sobel.at<Vec2s>(i, j).val[0];
+		auto y = sobel.at<Vec2s>(i, j).val[1];
+		module_direction.at<Vec2f>(i, j).val[0] = sqrt(x*x + y*y);
+		module_direction.at<Vec2f>(i, j).val[1] = atan2(y, x);
 	}
 
-	return make_pair(module, direction);
+	return module_direction;
 }
 
 pair<float, float> phi(float x, float l)
@@ -133,32 +102,24 @@ pair<float, float> phi(float x, float l)
 	return make_pair(a, b);
 }
 
-vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, BMP *image)
+vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &image)
 {
 	vector<float> one_image_features(blockSizeX * blockSizeY * dirSegSize, 0);
 
-	auto modDir = countModAndDirOfGrad(image);
-
-	/*
-	____                     ____             __
-	/ __ )____ _________     / __ \____ ______/ /_
-	/ __  / __ `/ ___/ _ \   / /_/ / __ `/ ___/ __/
-	/ /_/ / /_/ (__  )  __/  / ____/ /_/ / /  / /_
-	/_____/\__,_/____/\___/  /_/    \__,_/_/   \__/
-	*/
+	Mat modDir = countModAndDirOfGrad(image);
 
 	// counting hog (3.4)
-	const int rows = static_cast<int>(modDir.first.n_rows); // we use these ...
-	const int cols = static_cast<int>(modDir.first.n_cols); // ... not only one time
+	const int rows = int(modDir.rows); // we use these ...
+	const int cols = int(modDir.cols); // ... not only one time
 	for (int i = 0; i < rows; i++)
 	for (int j = 0; j < cols; j++) {
-		int blockIndx = static_cast<int>(i * blockSizeY / rows) * blockSizeX +
-			static_cast<int>(j * blockSizeX / cols);
-		int angleIndx = static_cast<int>(((static_cast<int>(modDir.second(i, j)) + M_PI) /
+		int blockIndx = int(float( i * blockSizeY ) / rows) * blockSizeX +
+			int( float( j * blockSizeX ) / cols);
+		int angleIndx = int(((int(modDir.at<Vec2f>(i, j).val[1]) + M_PI) /
 			(2 * M_PI)) * dirSegSize);
 
 		int featIndx = blockIndx * dirSegSize + angleIndx;
-		one_image_features[featIndx] += modDir.first(i, j);
+		one_image_features[featIndx] += modDir.at<Vec2f>(i, j).val[0];
 	}
 
 	// normalization of histograms (3.5)
@@ -175,15 +136,7 @@ vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSi
 		}
 	}
 
-	/*
-	__              ____           __                           ______  __ __ _
-	_________  / /___  _____   / __/__  ____ _/ /___  __________  _____   _/_/ __ \/ // /| |
-	/ ___/ __ \/ / __ \/ ___/  / /_/ _ \/ __ `/ __/ / / / ___/ _ \/ ___/  / // /_/ / // /_/ /
-	/ /__/ /_/ / / /_/ / /     / __/  __/ /_/ / /_/ /_/ / /  /  __(__  )  / / \__, /__  __/ /
-	\___/\____/_/\____/_/     /_/  \___/\__,_/\__/\__,_/_/   \___/____/  / / /____(_)/_/_/_/
-	|_|           /_/
-	*/
-
+#if 0
 	const int blockSX(8);
 	const int blockSY(8);
 	vector<int> colorR(blockSX * blockSY, 0);
@@ -193,14 +146,14 @@ vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSi
 
 	for (int i = 0; i < rows; i++)
 	for (int j = 0; j < cols; j++) {
-		int blockIndx = static_cast<int>(i * blockSY / rows) * blockSX +
-			static_cast<int>(j * blockSX / cols);
+		int blockIndx = int(i * blockSY / rows) * blockSX +
+			int(j * blockSX / cols);
 		colorR[blockIndx] += (*image)(j, i)->Red;
 		colorG[blockIndx] += (*image)(j, i)->Green;
 		colorB[blockIndx] += (*image)(j, i)->Blue;
 		colNum[blockIndx]++;
 	}
-#if 0
+
 	for (size_t i = 0; i < colorR.size(); i++)
 	{
 		one_image_features.push_back(colorR[i] / (255 * colNum[i]));
@@ -208,15 +161,6 @@ vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSi
 		one_image_features.push_back(colorB[i] / (255 * colNum[i]));
 	}
 #endif
-
-	/*
-	___                          ______    ____  ___    ______   ___   _
-	____  ____  ____  / (_)___  ___  ____ ______   / ___/ |  / /  |/  /  _/_/ __ \ |__ \ | |
-	/ __ \/ __ \/ __ \/ / / __ \/ _ \/ __ `/ ___/   \__ \| | / / /|_/ /  / // /_/ / __/ / / /
-	/ / / / /_/ / / / / / / / / /  __/ /_/ / /      ___/ /| |/ / /  / /  / / \__, / / __/ / /
-	/_/ /_/\____/_/ /_/_/_/_/ /_/\___/\__,_/_/      /____/ |___/_/  /_/  / / /____(_)____//_/
-	|_|            /_/
-	*/
 
 	vector<float> tmp;
 
@@ -235,14 +179,6 @@ vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSi
 // Exatract features from dataset.
 void ExtractFeatures(const TFileList& file_list, TFeatures* features)
 {
-	/*
-	____                      _       __                ______                   ______   _____ _
-	/ __ \___  _______________(_)___  / /_____  _____   /_  __/_______  ___     _/_/ __ \ |__  /| |
-	/ / / / _ \/ ___/ ___/ ___/ / __ \/ __/ __ \/ ___/    / / / ___/ _ \/ _ \   / // /_/ /  /_ < / /
-	/ /_/ /  __(__  ) /__/ /  / / /_/ / /_/ /_/ / /       / / / /  /  __/  __/  / / \__, / ___/ // /
-	/_____/\___/____/\___/_/  /_/ .___/\__/\____/_/       /_/ /_/   \___/\___/  / / /____(_)____//_/
-	/_/                                              |_|            /_/
-	*/
 	const int treeDepth(blockSizeX.size());
 	for (size_t image_idx = 0; image_idx < file_list.size(); ++image_idx) {
 		if ((image_idx + 1) % 500 == 0)
@@ -251,13 +187,13 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features)
 		vector<float> one_image_features;
 		for (int i = 0; i < treeDepth; i++)
 		{
-			BMP image;
+			Mat image;
 			// Read image from file
-			image.ReadFromFile(file_list[image_idx].first.c_str());
+			image = imread( file_list[image_idx].first.c_str() );
 			// Add image and it's label to dataset
 			//data_set->push_back(make_pair(image, file_list[image_idx].second));
 
-			auto tmp = HOG(blockSizeX[i], blockSizeY[i], dirSegSize, &image);
+			auto tmp = HOG(blockSizeX[i], blockSizeY[i], dirSegSize, image);
 			for (size_t k = 0; k < tmp.size(); k++) {
 				one_image_features.push_back(tmp[k]);
 			}
@@ -265,31 +201,11 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features)
 		features->push_back(make_pair(one_image_features, file_list[image_idx].second));
 	}
 }
-/*
-______          __         ____                                     __
-/ ____/___  ____/ /  ____  / __/  ____ ___  __  __   _________  ____/ /__
-/ __/ / __ \/ __  /  / __ \/ /_   / __ `__ \/ / / /  / ___/ __ \/ __  / _ \
-/ /___/ / / / /_/ /  / /_/ / __/  / / / / / / /_/ /  / /__/ /_/ / /_/ /  __/
-/_____/_/ /_/\__,_/   \____/_/    /_/ /_/ /_/\__, /   \___/\____/\__,_/\___/
-/____/
-*/
-
-// Clear dataset structure
-void ClearDataset(TDataSet* data_set) {
-	// Delete all images from dataset
-	for (size_t image_idx = 0; image_idx < data_set->size(); ++image_idx)
-		delete (*data_set)[image_idx].first;
-	// Clear dataset
-	data_set->clear();
-}
-
 // Train SVM classifier using data from 'data_file' and save trained model
 // to 'model_file'
 void TrainClassifier(const string& data_file, const string& model_file) {
 	// List of image file names and its labels
 	TFileList file_list;
-	// Structure of images and its labels
-	TDataSet data_set;
 	// Structure of features of images and its labels
 	TFeatures features;
 	// Model which would be trained
@@ -299,8 +215,6 @@ void TrainClassifier(const string& data_file, const string& model_file) {
 
 	// Load list of image file names and its labels
 	LoadFileList(data_file, &file_list);
-	// Load images
-	//LoadImages(file_list, &data_set);
 	// Extract features from images
 	std::cout << "Extract Features";
 	ExtractFeatures(file_list, &features);
@@ -315,8 +229,6 @@ void TrainClassifier(const string& data_file, const string& model_file) {
 	classifier.Train(features, &model);
 	// Save model to file
 	model.Save(model_file);
-	// Clear dataset structure
-	//ClearDataset(&data_set);
 }
 
 // Predict data from 'data_file' using model from 'model_file' and

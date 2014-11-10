@@ -13,57 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="bridge">
-      <UniqueIdentifier>{ad61e71b-ba0a-4304-8c6e-ffb5ad88b758}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="EasyBMP\EasyBMP.cpp">
-      <Filter>bridge</Filter>
-    </ClCompile>
-    <ClCompile Include="argvparser\argvparser.cpp">
-      <Filter>bridge</Filter>
-    </ClCompile>
-    <ClCompile Include="liblinear\linear.cpp">
-      <Filter>bridge</Filter>
-    </ClCompile>
-    <ClCompile Include="liblinear\tron.cpp">
-      <Filter>bridge</Filter>
-    </ClCompile>
-    <ClCompile Include="liblinear\blas\daxpy.c">
-      <Filter>bridge</Filter>
-    </ClCompile>
-    <ClCompile Include="liblinear\blas\ddot.c">
-      <Filter>bridge</Filter>
-    </ClCompile>
-    <ClCompile Include="liblinear\blas\dnrm2.c">
-      <Filter>bridge</Filter>
-    </ClCompile>
-    <ClCompile Include="liblinear\blas\dscal.c">
-      <Filter>bridge</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\HOG.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\matrix.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\classifier.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\matrix.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="argvparser\argvparser.h">
-      <Filter>bridge</Filter>
-    </ClInclude>
-    <ClInclude Include="liblinear\linear.h">
-      <Filter>bridge</Filter>
     </ClInclude>
     <ClInclude Include="..\src\HOG.h">
       <Filter>Header Files</Filter>
