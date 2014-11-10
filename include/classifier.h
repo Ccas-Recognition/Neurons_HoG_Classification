@@ -157,7 +157,7 @@ class TClassifier {
             }
             x[number_of_features].index = -1;
                 // Add predicted label to labels structure
-            labels->push_back(predict(model.get(), x));
+            labels->push_back(int( predict(model.get(), x) ) );
 			//double arr[2];
 			//predict_values(model.get(), x, arr);
 			//outfile << labels->back() << " " << arr[0] << " " << arr[1] << std::endl;

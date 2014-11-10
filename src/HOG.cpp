@@ -1,5 +1,6 @@
 
 #include "HOG.h"
+#include <time.h>
 
 namespace HOGFeatureClassifier
 {
@@ -61,17 +62,24 @@ Mat toGreyScale(const Mat &in)
 // so here hand-made sobel filter
 Mat countSobel(const Mat &in)
 {
-	Mat img = toGreyScale(in);
-	Mat sobel(in.rows, in.cols, CV_16SC2);
+	//Mat img = toGreyScale(in);
+	Mat sobel(in.rows, in.cols, CV_16SC2, Scalar(0,0,0));
 
 	int rows = int(in.rows);
 	int cols = int(in.cols);
+	#if 0
 	for (int i = 0; i < rows; i++)
 	for (int j = 0; j < cols; j++) {
-		sobel.at<Vec2s>(i, j).val[1] = ((i > 0) ? img.at<uchar>(i - 1, j) : 0) - ((i < rows - 1) ? img.at<uchar>(i + 1, j) : 0);
-		sobel.at<Vec2s>(i, j).val[0] = ((j < cols - 1) ? img.at<uchar>(i, j + 1) : 0) - ((j > 0) ? img.at<uchar>(i, j - 1) : 0);
+		sobel.at<Vec2s>(i, j).val[1] = ((i > 0) ? in.at<uchar>(i - 1, j) : 0) - ((i < rows - 1) ? in.at<uchar>(i + 1, j) : 0);
+		sobel.at<Vec2s>(i, j).val[0] = ((j < cols - 1) ? in.at<uchar>(i, j + 1) : 0) - ((j > 0) ? in.at<uchar>(i, j - 1) : 0);
 	}
-
+	#else
+	for (int i = 1; i < rows; i++)
+	for (int j = 1; j < cols; j++) {
+		sobel.at<Vec2s>(i, j).val[1] = in.at<uchar>(i - 1, j) - in.at<uchar>(i + 1, j);
+		sobel.at<Vec2s>(i, j).val[0] = in.at<uchar>(i, j + 1) - in.at<uchar>(i, j - 1);
+	}
+	#endif
 	return sobel;
 }
 
@@ -102,11 +110,9 @@ pair<float, float> phi(float x, float l)
 	return make_pair(a, b);
 }
 
-vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &image)
+vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &modDir)
 {
 	vector<float> one_image_features(blockSizeX * blockSizeY * dirSegSize, 0);
-
-	Mat modDir = countModAndDirOfGrad(image);
 
 	// counting hog (3.4)
 	const int rows = int(modDir.rows); // we use these ...
@@ -163,6 +169,7 @@ vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSi
 #endif
 
 	vector<float> tmp;
+	tmp.reserve(one_image_features.size()*(nonlinear_n*2 + 1)*2);
 
 	for (size_t i = 0; i < one_image_features.size(); i++) {
 		for (int j = -nonlinear_n; j <= nonlinear_n; j++) {
@@ -179,8 +186,12 @@ vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSi
 // Exatract features from dataset.
 void ExtractFeatures(const TFileList& file_list, TFeatures* features)
 {
+	clock_t begin_time = clock();
+	std::cout << "Extract Features";
+
 	const int treeDepth(blockSizeX.size());
-	for (size_t image_idx = 0; image_idx < file_list.size(); ++image_idx) {
+	for (size_t image_idx = 0; image_idx < file_list.size(); ++image_idx) 
+	{
 		if ((image_idx + 1) % 500 == 0)
 			cout << ".";
 
@@ -189,17 +200,23 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features)
 		{
 			Mat image;
 			// Read image from file
-			image = imread( file_list[image_idx].first.c_str() );
+			image = imread( file_list[image_idx].first.c_str(), 0 );
 			// Add image and it's label to dataset
 			//data_set->push_back(make_pair(image, file_list[image_idx].second));
 
-			auto tmp = HOG(blockSizeX[i], blockSizeY[i], dirSegSize, image);
+			Mat modDir = countModAndDirOfGrad(image);
+
+			auto tmp = HOG(blockSizeX[i], blockSizeY[i], dirSegSize, modDir);
 			for (size_t k = 0; k < tmp.size(); k++) {
 				one_image_features.push_back(tmp[k]);
 			}
 		}
 		features->push_back(make_pair(one_image_features, file_list[image_idx].second));
 	}
+
+	std::cout << "done" << std::endl;
+	clock_t end_time = clock();
+	cout << "Extraction Time: " << (float(end_time - begin_time)/1000.0f) << endl;
 }
 // Train SVM classifier using data from 'data_file' and save trained model
 // to 'model_file'
@@ -216,9 +233,8 @@ void TrainClassifier(const string& data_file, const string& model_file) {
 	// Load list of image file names and its labels
 	LoadFileList(data_file, &file_list);
 	// Extract features from images
-	std::cout << "Extract Features";
+
 	ExtractFeatures(file_list, &features);
-	std::cout << "done" << std::endl;
 
 	// PLACE YOUR CODE HERE
 	// You can change parameters of classifier here
@@ -250,9 +266,8 @@ void PredictData(const string& data_file,
 	// Load images
 	//LoadImages(file_list, &data_set);
 	// Extract features from images
-	std::cout << "Extract Features";
+
 	ExtractFeatures(file_list, &features);
-	std::cout << " done" << std::endl;
 
 	// Classifier 
 	TClassifier classifier = TClassifier(TClassifierParams());
