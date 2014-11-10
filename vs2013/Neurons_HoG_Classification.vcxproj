@@ -81,7 +81,8 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\task2.cpp" />
+    <ClCompile Include="..\src\HOG.cpp" />
+    <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="argvparser\argvparser.cpp" />
     <ClCompile Include="EasyBMP\EasyBMP.cpp" />
     <ClCompile Include="liblinear\blas\daxpy.c" />
@@ -95,6 +96,7 @@
     <ClInclude Include="..\include\classifier.h" />
     <ClInclude Include="..\include\matrix.h" />
     <ClInclude Include="..\include\matrix.hpp" />
+    <ClInclude Include="..\src\HOG.h" />
     <ClInclude Include="argvparser\argvparser.h" />
     <ClInclude Include="liblinear\linear.h" />
   </ItemGroup>

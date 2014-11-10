@@ -18,9 +18,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\task2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="EasyBMP\EasyBMP.cpp">
       <Filter>bridge</Filter>
     </ClCompile>
@@ -45,6 +42,12 @@
     <ClCompile Include="liblinear\blas\dscal.c">
       <Filter>bridge</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\HOG.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\matrix.hpp">
@@ -61,6 +64,9 @@
     </ClInclude>
     <ClInclude Include="liblinear\linear.h">
       <Filter>bridge</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\HOG.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
