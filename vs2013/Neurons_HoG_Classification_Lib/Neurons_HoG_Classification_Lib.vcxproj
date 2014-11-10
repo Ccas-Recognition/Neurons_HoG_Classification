@@ -89,7 +89,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\HOG.cpp" />
-    <ClCompile Include="..\argvparser\argvparser.cpp" />
     <ClCompile Include="..\liblinear\blas\daxpy.c" />
     <ClCompile Include="..\liblinear\blas\ddot.c" />
     <ClCompile Include="..\liblinear\blas\dnrm2.c" />
@@ -100,7 +99,6 @@
   <ItemGroup>
     <ClInclude Include="..\..\include\classifier.h" />
     <ClInclude Include="..\..\src\HOG.h" />
-    <ClInclude Include="..\argvparser\argvparser.h" />
     <ClInclude Include="..\liblinear\blas\blas.h" />
     <ClInclude Include="..\liblinear\blas\blasp.h" />
     <ClInclude Include="..\liblinear\linear.h" />

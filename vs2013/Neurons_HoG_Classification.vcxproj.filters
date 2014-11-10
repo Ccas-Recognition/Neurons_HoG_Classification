@@ -13,10 +13,16 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="bridge">
+      <UniqueIdentifier>{73618bbf-410d-4157-8e66-53091b7ba2c2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="argvparser\argvparser.cpp">
+      <Filter>bridge</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -25,6 +31,9 @@
     </ClInclude>
     <ClInclude Include="..\src\HOG.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="argvparser\argvparser.h">
+      <Filter>bridge</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

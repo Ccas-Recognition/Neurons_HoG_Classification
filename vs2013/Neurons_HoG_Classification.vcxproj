@@ -89,10 +89,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="argvparser\argvparser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\classifier.h" />
     <ClInclude Include="..\src\HOG.h" />
+    <ClInclude Include="argvparser\argvparser.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Neurons_HoG_Classification_Lib\Neurons_HoG_Classification_Lib.vcxproj">

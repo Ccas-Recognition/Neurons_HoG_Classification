@@ -1,4 +1,7 @@
 #include "HOG.h"
+#include "argvparser.h"
+
+using CommandLineProcessing::ArgvParser;
 
 int main(int argc, char** argv) {
 	using namespace HOGFeatureClassifier;

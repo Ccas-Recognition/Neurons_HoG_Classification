@@ -24,9 +24,6 @@
     <ClCompile Include="..\..\src\HOG.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\argvparser\argvparser.cpp">
-      <Filter>bridge</Filter>
-    </ClCompile>
     <ClCompile Include="..\liblinear\blas\daxpy.c">
       <Filter>bridge</Filter>
     </ClCompile>
@@ -44,9 +41,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\argvparser\argvparser.h">
-      <Filter>bridge</Filter>
-    </ClInclude>
     <ClInclude Include="..\liblinear\blas\blas.h">
       <Filter>bridge</Filter>
     </ClInclude>

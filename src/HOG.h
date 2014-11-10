@@ -11,7 +11,7 @@
 
 #include "classifier.h"
 #include "linear.h"
-#include "argvparser.h"
+
 
 //#include <opencv2/core/core.hpp>
 #include "opencv2/opencv.hpp"
@@ -42,8 +42,6 @@ using std::make_pair;
 using std::cout;
 using std::cerr;
 using std::endl;
-
-using CommandLineProcessing::ArgvParser;
 
 typedef vector<pair<string, int> > TFileList;
 typedef vector<pair<vector<float>, int> > TFeatures;
