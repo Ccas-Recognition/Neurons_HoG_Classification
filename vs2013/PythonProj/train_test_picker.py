@@ -7,8 +7,8 @@ ftest = open("../../data/neuron/test.txt", "w")
 ftrain = open("../../data/neuron/train.txt", "w")
 
 if 1:
-    sampling_count = 8000
-    training_count = 4500
+    sampling_count = 4915
+    training_count = 4300
 else:
     sampling_count = 1000
     training_count = 500
@@ -47,3 +47,5 @@ def bmpToJpg(mypath, label):
 
 bmpToJpg('../../data/neuron/totall_data/bg/', 1)
 bmpToJpg('../../data/neuron/totall_data/fg/', 2)
+
+print('Sampling generated: %d training, %d testing'%((training_count*2), ((sampling_count - training_count)*2)))

@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Neurons_HoG_Classification"
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PythonProj", "PythonProj\PythonProj.pyproj", "{DCADE8F7-0E11-45C9-858A-938E415A1260}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Neurons_HoG_Classification_Lib", "Neurons_HoG_Classification_Lib\Neurons_HoG_Classification_Lib.vcxproj", "{5AD56252-6FA7-4465-AB72-F7917B0C5BB3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,16 @@ Global
 		{DCADE8F7-0E11-45C9-858A-938E415A1260}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DCADE8F7-0E11-45C9-858A-938E415A1260}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{DCADE8F7-0E11-45C9-858A-938E415A1260}.Release|Win32.ActiveCfg = Release|Any CPU
+		{5AD56252-6FA7-4465-AB72-F7917B0C5BB3}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{5AD56252-6FA7-4465-AB72-F7917B0C5BB3}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{5AD56252-6FA7-4465-AB72-F7917B0C5BB3}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{5AD56252-6FA7-4465-AB72-F7917B0C5BB3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5AD56252-6FA7-4465-AB72-F7917B0C5BB3}.Debug|Win32.Build.0 = Debug|Win32
+		{5AD56252-6FA7-4465-AB72-F7917B0C5BB3}.Release|Any CPU.ActiveCfg = Release|Win32
+		{5AD56252-6FA7-4465-AB72-F7917B0C5BB3}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{5AD56252-6FA7-4465-AB72-F7917B0C5BB3}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{5AD56252-6FA7-4465-AB72-F7917B0C5BB3}.Release|Win32.ActiveCfg = Release|Win32
+		{5AD56252-6FA7-4465-AB72-F7917B0C5BB3}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

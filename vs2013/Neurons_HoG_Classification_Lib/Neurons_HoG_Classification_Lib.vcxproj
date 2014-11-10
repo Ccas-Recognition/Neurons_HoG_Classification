@@ -11,9 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{E976FCD1-1D48-4374-876E-AF6B6C168881}</ProjectGuid>
+    <ProjectGuid>{5AD56252-6FA7-4465-AB72-F7917B0C5BB3}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Neurons_HoG_Classification</RootNamespace>
+    <RootNamespace>Neurons_HoG_Classification_Lib</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -23,7 +23,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -52,7 +52,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include;./EasyBMP;./liblinear;./argvparser</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../include;../EasyBMP;../liblinear;../argvparser</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -68,7 +68,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include;./EasyBMP;./liblinear;./argvparser</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../include;../EasyBMP;../liblinear;../argvparser</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -76,29 +76,33 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
-    <PostBuildEvent>
-      <Command>post_build_event.bat</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\HOG.cpp" />
-    <ClCompile Include="..\src\main.cpp" />
-    <ClCompile Include="argvparser\argvparser.cpp" />
-    <ClCompile Include="EasyBMP\EasyBMP.cpp" />
-    <ClCompile Include="liblinear\blas\daxpy.c" />
-    <ClCompile Include="liblinear\blas\ddot.c" />
-    <ClCompile Include="liblinear\blas\dnrm2.c" />
-    <ClCompile Include="liblinear\blas\dscal.c" />
-    <ClCompile Include="liblinear\linear.cpp" />
-    <ClCompile Include="liblinear\tron.cpp" />
+    <ClCompile Include="..\..\src\HOG.cpp" />
+    <ClCompile Include="..\..\src\main.cpp" />
+    <ClCompile Include="..\argvparser\argvparser.cpp" />
+    <ClCompile Include="..\EasyBMP\EasyBMP.cpp" />
+    <ClCompile Include="..\liblinear\blas\daxpy.c" />
+    <ClCompile Include="..\liblinear\blas\ddot.c" />
+    <ClCompile Include="..\liblinear\blas\dnrm2.c" />
+    <ClCompile Include="..\liblinear\blas\dscal.c" />
+    <ClCompile Include="..\liblinear\linear.cpp" />
+    <ClCompile Include="..\liblinear\tron.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\classifier.h" />
-    <ClInclude Include="..\include\matrix.h" />
-    <ClInclude Include="..\include\matrix.hpp" />
-    <ClInclude Include="..\src\HOG.h" />
-    <ClInclude Include="argvparser\argvparser.h" />
-    <ClInclude Include="liblinear\linear.h" />
+    <ClInclude Include="..\..\include\classifier.h" />
+    <ClInclude Include="..\..\include\matrix.h" />
+    <ClInclude Include="..\..\include\matrix.hpp" />
+    <ClInclude Include="..\..\src\HOG.h" />
+    <ClInclude Include="..\argvparser\argvparser.h" />
+    <ClInclude Include="..\EasyBMP\EasyBMP.h" />
+    <ClInclude Include="..\EasyBMP\EasyBMP_BMP.h" />
+    <ClInclude Include="..\EasyBMP\EasyBMP_DataStructures.h" />
+    <ClInclude Include="..\EasyBMP\EasyBMP_VariousBMPutilities.h" />
+    <ClInclude Include="..\liblinear\blas\blas.h" />
+    <ClInclude Include="..\liblinear\blas\blasp.h" />
+    <ClInclude Include="..\liblinear\linear.h" />
+    <ClInclude Include="..\liblinear\tron.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
