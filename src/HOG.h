@@ -25,6 +25,15 @@ _/ /_/ (__  ) /_/ / /_/ / / / / /_/ / __/ __/_    / /  / / /  / / ____/     ___/
 
 namespace HOGFeatureClassifier
 {
+	//Context {
+	const vector<int> blockSizeX = { 4, 6 };
+	const vector<int> blockSizeY = { 4, 6 };
+	const int dirSegSize = 8;
+
+	const int nonlinear_n = 4;//2
+	const float nonlinear_L = 0.5;
+	const double param_C = 0.08;
+	//}
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846

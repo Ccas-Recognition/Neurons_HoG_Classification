@@ -220,12 +220,9 @@ vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSi
 
 	vector<float> tmp;
 
-	const int n = 4;//2
-	const float L = 0.5; //0.5
-
 	for (size_t i = 0; i < one_image_features.size(); i++) {
-		for (int j = -n; j <= n; j++) {
-			auto x = phi(one_image_features[i], j * L);
+		for (int j = -nonlinear_n; j <= nonlinear_n; j++) {
+			auto x = phi(one_image_features[i], j * nonlinear_L);
 			tmp.push_back(x.first);
 			tmp.push_back(x.second);
 		}
@@ -246,9 +243,6 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features)
 	/_____/\___/____/\___/_/  /_/ .___/\__/\____/_/       /_/ /_/   \___/\___/  / / /____(_)____//_/
 	/_/                                              |_|            /_/
 	*/
-	const vector<int> blockSizeX = { 4, 6 };//{6};
-	const vector<int> blockSizeY = { 4, 6 };//{6};
-	const int dirSegSize(8);//(8);
 	const int treeDepth(blockSizeX.size());
 	for (size_t image_idx = 0; image_idx < file_list.size(); ++image_idx) {
 		if ((image_idx + 1) % 500 == 0)
@@ -314,8 +308,8 @@ void TrainClassifier(const string& data_file, const string& model_file) {
 
 	// PLACE YOUR CODE HERE
 	// You can change parameters of classifier here
-	params.C = 0.08;
-
+	params.C = param_C;
+	
 	TClassifier classifier(params);
 	// Train classifier
 	classifier.Train(features, &model);

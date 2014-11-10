@@ -15,9 +15,10 @@ else:
 
 training_data_dir_txt = 'training_data/'
 training_data_dir = '../../data/neuron/training_data/'
+total_data_dir = '../../data/neuron/totall_data/'
 
 def bmpToJpg(mypath, label):
-    onlyfiles = np.array([ f for f in listdir(mypath) if isfile(join(mypath,f)) ])
+    onlyfiles = np.array([ f for f in listdir(mypath) if isfile(join(mypath,f)) and splitext(f)[1] == ".jpg"  ])
 
     indx = np.random.choice(onlyfiles.size, min( sampling_count, len( onlyfiles) ), replace = False)
 
@@ -45,7 +46,7 @@ def bmpToJpg(mypath, label):
             img = cv2.imread(mypath + file)
             cv2.imwrite(training_data_dir + fileName + '.bmp', img)
 
-bmpToJpg('../../data/neuron/totall_data/bg/', 1)
-bmpToJpg('../../data/neuron/totall_data/fg/', 2)
+bmpToJpg(total_data_dir + 'bg/', 1)
+bmpToJpg(total_data_dir + 'fg/', 2)
 
 print('Sampling generated: %d training, %d testing'%((training_count*2), ((sampling_count - training_count)*2)))
