@@ -14,155 +14,174 @@ using std::pair;
 using std::string;
 using std::auto_ptr;
 
-typedef vector<pair<vector<float>, int> > TFeatures;
-typedef vector<int> TLabels;
+namespace HOGFeatureClassifier
+{
 
-// Model of classifier to be trained
-// Encapsulates 'struct model' from liblinear
-class TModel {
-        // Pointer to liblinear model;
-    auto_ptr<struct model> model_;
- public:
-        // Basic constructor
-    TModel(): model_(NULL) {}
-        // Construct class by liblinear model
-    TModel(struct model* model): model_(model) {}
-        // Operator = for liblinear model
-    TModel& operator=(struct model* model) {
-        model_ = auto_ptr<struct model>(model);
-        return *this;
-    }
-        // Save model to file
-    void Save(const string& model_file) const {
-        assert(model_.get());
-        save_model(model_file.c_str(), model_.get());
-    }
-        // Load model from file
-    void Load(const string& model_file) {
-        model_ = auto_ptr<struct model>(load_model(model_file.c_str()));
-    }
-        // Get pointer to liblinear model
-    struct model* get() const {
-        return model_.get();
-    }
-};
+	typedef vector<pair<vector<float>, int> > TFeatures;
+	typedef vector<int> TLabels;
 
-// Parameters for classifier training
-// Read more about it in liblinear documentation
-struct TClassifierParams {
-    double bias;
-    int solver_type;
-    double C;
-    double eps;
-    int nr_weight;
-    int* weight_label;
-    double* weight;
+	// Model of classifier to be trained
+	// Encapsulates 'struct model' from liblinear
+	class TModel {
+		// Pointer to liblinear model;
+		auto_ptr<struct model> model_;
+	public:
+		// Basic constructor
+		TModel() : model_(NULL) {}
+		// Construct class by liblinear model
+		TModel(struct model* model) : model_(model) {}
+		// Operator = for liblinear model
+		TModel& operator=(struct model* model) {
+			model_ = auto_ptr<struct model>(model);
+			return *this;
+		}
+		// Save model to file
+		void Save(const string& model_file) const {
+			assert(model_.get());
+			save_model(model_file.c_str(), model_.get());
+		}
+		// Load model from file
+		void Load(const string& model_file) {
+			model_ = auto_ptr<struct model>(load_model(model_file.c_str()));
+		}
+		// Get pointer to liblinear model
+		struct model* get() const {
+			return model_.get();
+		}
+	};
 
-    TClassifierParams() {
-        bias = -1;
-        solver_type = L2R_L2LOSS_SVC_DUAL;
-        C = 0.1;
-        eps = 1e-4;
-        nr_weight = 0;
-        weight_label = NULL;
-        weight = NULL;
-    }
-};
+	// Parameters for classifier training
+	// Read more about it in liblinear documentation
+	struct TClassifierParams {
+		double bias;
+		int solver_type;
+		double C;
+		double eps;
+		int nr_weight;
+		int* weight_label;
+		double* weight;
 
-// Classifier. Encapsulates liblinear classifier.
-class TClassifier {
-        // Parameters of classifier
-    TClassifierParams params_;
+		TClassifierParams() {
+			bias = -1;
+			solver_type = L2R_L2LOSS_SVC_DUAL;
+			C = 0.1;
+			eps = 1e-4;
+			nr_weight = 0;
+			weight_label = NULL;
+			weight = NULL;
+		}
+	};
 
- public:
-        // Basic constructor
-    TClassifier(const TClassifierParams& params): params_(params) {}
+	// Classifier. Encapsulates liblinear classifier.
+	class TClassifier {
+		// Parameters of classifier
+		TClassifierParams params_;
 
-        // Train classifier
-    void Train(const TFeatures& features, TModel* model) {
-            // Number of samples and features must be nonzero
-        size_t number_of_samples = features.size();
-        assert(number_of_samples > 0);
+	public:
+		// Basic constructor
+		TClassifier(const TClassifierParams& params) : params_(params) {}
 
-        size_t number_of_features = features[0].first.size();
-        assert(number_of_features > 0);
-		
-		std::cout << "number of samples: " << number_of_samples << std::endl;
-		std::cout << "number of features: " << number_of_features << std::endl;
+		// Train classifier
+		void Train(const TFeatures& features, TModel* model) {
+			// Number of samples and features must be nonzero
+			size_t number_of_samples = features.size();
+			assert(number_of_samples > 0);
 
-		vector<feature_node> data(number_of_samples*(number_of_features + 1));
-		//std::cout << "Setting up prob" << std::endl;
-            // Description of one problem
+			size_t number_of_features = features[0].first.size();
+			assert(number_of_features > 0);
 
-        struct problem prob;
-        prob.l = number_of_samples;
-        prob.bias = -1;
-        prob.n = number_of_features;
-        prob.y = new double[number_of_samples];
-        prob.x = new struct feature_node*[number_of_samples];
+			std::cout << "number of samples: " << number_of_samples << std::endl;
+			std::cout << "number of features: " << number_of_features << std::endl;
 
-            // Fill struct problem
-        for (size_t sample_idx = 0; sample_idx < number_of_samples; ++sample_idx)
-        {
-            //prob.x[sample_idx] = new struct feature_node[number_of_features + 1];
-			prob.x[sample_idx] = &(data[ sample_idx*(number_of_features + 1) ]);
-            for (unsigned int feature_idx = 0; feature_idx < number_of_features; feature_idx++)
-            {
-                prob.x[sample_idx][feature_idx].index = feature_idx + 1;
-                prob.x[sample_idx][feature_idx].value = features[sample_idx].first[feature_idx];
-            }
-            prob.x[sample_idx][number_of_features].index = -1;
-            prob.y[sample_idx] = features[sample_idx].second;
-        }
+			vector<feature_node> data(number_of_samples*(number_of_features + 1));
+			//std::cout << "Setting up prob" << std::endl;
+			// Description of one problem
 
-            // Fill param structure by values from 'params_'
-        struct parameter param;
-        param.solver_type = params_.solver_type;
-        param.C = params_.C;      // try to vary it
-        param.eps = params_.eps;
-        param.nr_weight = params_.nr_weight;
-        param.weight_label = params_.weight_label;
-        param.weight = params_.weight;
+			struct problem prob;
+			prob.l = number_of_samples;
+			prob.bias = -1;
+			prob.n = number_of_features;
+			prob.y = new double[number_of_samples];
+			prob.x = new struct feature_node*[number_of_samples];
 
-            // Train model
-		//std::cout << "Train begin" << std::endl;
-        *model = train(&prob, &param);
-		//std::cout << "Train end" << std::endl;
+			// Fill struct problem
+			for (size_t sample_idx = 0; sample_idx < number_of_samples; ++sample_idx)
+			{
+				//prob.x[sample_idx] = new struct feature_node[number_of_features + 1];
+				prob.x[sample_idx] = &(data[sample_idx*(number_of_features + 1)]);
+				for (unsigned int feature_idx = 0; feature_idx < number_of_features; feature_idx++)
+				{
+					prob.x[sample_idx][feature_idx].index = feature_idx + 1;
+					prob.x[sample_idx][feature_idx].value = features[sample_idx].first[feature_idx];
+				}
+				prob.x[sample_idx][number_of_features].index = -1;
+				prob.y[sample_idx] = features[sample_idx].second;
+			}
 
-            // Clear param structure
-        destroy_param(&param);
-            // clear problem structure
-        delete[] prob.y;
-       // for (unsigned int sample_idx = 0; sample_idx < number_of_samples; ++sample_idx)
-        //    delete[] prob.x[sample_idx];
-        delete[] prob.x;
-    }
+			// Fill param structure by values from 'params_'
+			struct parameter param;
+			param.solver_type = params_.solver_type;
+			param.C = params_.C;      // try to vary it
+			param.eps = params_.eps;
+			param.nr_weight = params_.nr_weight;
+			param.weight_label = params_.weight_label;
+			param.weight = params_.weight;
 
-        // Predict data
-    void Predict(const TFeatures& features, const TModel& model, TLabels* labels) {
-            // Number of samples and features must be nonzero
-        size_t number_of_samples = features.size();
-        assert(number_of_samples > 0);
-        size_t number_of_features = features[0].first.size();
-        assert(number_of_features > 0);
+			// Train model
+			//std::cout << "Train begin" << std::endl;
+			*model = train(&prob, &param);
+			//std::cout << "Train end" << std::endl;
 
-            // Fill struct problem
-        struct feature_node* x = new struct feature_node[number_of_features + 1];
+			// Clear param structure
+			destroy_param(&param);
+			// clear problem structure
+			delete[] prob.y;
+			// for (unsigned int sample_idx = 0; sample_idx < number_of_samples; ++sample_idx)
+			//    delete[] prob.x[sample_idx];
+			delete[] prob.x;
+		}
 
-		//std::ofstream outfile("dump.txt");
-        for (size_t sample_idx = 0; sample_idx < features.size(); ++sample_idx) {
-            for (unsigned int feature_idx = 0; feature_idx < number_of_features; ++feature_idx) {
-                x[feature_idx].index = feature_idx + 1;
-                x[feature_idx].value = features[sample_idx].first[feature_idx];
-            }
-            x[number_of_features].index = -1;
-                // Add predicted label to labels structure
-            labels->push_back(int( predict(model.get(), x) ) );
-			//double arr[2];
-			//predict_values(model.get(), x, arr);
-			//outfile << labels->back() << " " << arr[0] << " " << arr[1] << std::endl;
-        }
-    }
-};
+		void ConvertFeaturesToClassifierType(const vector<float>& features, vector< struct feature_node > &classifier_features) const
+		{
+			classifier_features.clear();
+			for (int i = 0; i < features.size(); ++i)
+			{
+				classifier_features.push_back(feature_node());
+				classifier_features.back().index = i + 1;
+				classifier_features.back().value = features[i];
+			}
+			classifier_features.push_back(feature_node());
+			classifier_features.back().index = -1;
+		}
 
+		double ComputePredictValue(const vector< struct feature_node > &classifier_features, const TModel& model) const
+		{
+			double arr[1];
+			predict_values(model.get(), &(classifier_features[0]), arr);
+			return arr[0];
+		}
+
+		// Predict data
+		void Predict(const TFeatures& features, const TModel& model, TLabels* labels) {
+			// Number of samples and features must be nonzero
+			size_t number_of_samples = features.size();
+			assert(number_of_samples > 0);
+			size_t number_of_features = features[0].first.size();
+			assert(number_of_features > 0);
+
+			// Fill struct problem
+			vector< struct feature_node > x;
+			x.reserve(number_of_features + 1);
+
+			//std::ofstream outfile("dump.txt");
+			for (size_t sample_idx = 0; sample_idx < features.size(); ++sample_idx) 
+			{
+				ConvertFeaturesToClassifierType(features[sample_idx].first, x);
+				labels->push_back( int( predict( model.get(), &(x[0]) ) ) );
+
+				//outfile << labels->back() << " " << ComputePredictValue(x, model) << std::endl;
+			}
+		}
+	};
+}//HOGFeatureClassifier
 #endif

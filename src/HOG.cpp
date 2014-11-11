@@ -43,26 +43,9 @@ void SavePredictions(const TFileList& file_list,
 	stream.close();
 }
 
-// Making grayscale image (3.1)
-Mat toGreyScale(const Mat &in)
-{
-	Mat img(in.rows, in.cols, CV_8UC1);
-	for (int i = 0; i < in.rows; i++)
-	for (int j = 0; j < in.cols; j++) {
-		img.at<uchar>(i, j) = int(0.299 * in.at<Vec3b>(i, j).val[2] +
-			0.587 * in.at<Vec3b>(i, j).val[1] +
-			0.114 * in.at<Vec3b>(i, j).val[0] );
-	}
 
-	return img;
-}
-
-// Making matrixes of x and y parts of gradient (3.2)
-// Sobel by unary map gives worse result at all
-// so here hand-made sobel filter
 Mat countSobel(const Mat &in)
 {
-	//Mat img = toGreyScale(in);
 	Mat sobel(in.rows, in.cols, CV_16SC2, Scalar(0,0,0));
 
 	int rows = int(in.rows);
@@ -110,9 +93,9 @@ pair<float, float> phi(float x, float l)
 	return make_pair(a, b);
 }
 
-vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &modDir)
+void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &modDir, vector<float> &feats )
 {
-	vector<float> one_image_features(blockSizeX * blockSizeY * dirSegSize, 0);
+	vector<float> buffer(blockSizeX * blockSizeY * dirSegSize);
 
 	// counting hog (3.4)
 	const int rows = int(modDir.rows); // we use these ...
@@ -125,7 +108,7 @@ vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSi
 			(2 * M_PI)) * dirSegSize);
 
 		int featIndx = blockIndx * dirSegSize + angleIndx;
-		one_image_features[featIndx] += modDir.at<Vec2f>(i, j).val[0];
+		buffer[featIndx] += modDir.at<Vec2f>(i, j).val[0];
 	}
 
 	// normalization of histograms (3.5)
@@ -133,13 +116,12 @@ vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSi
 	for (int i = 0; i < blockSizeX * blockSizeY; i += numOfBlocks) {
 		float norm(0);
 		for (int j = 0; j < dirSegSize * numOfBlocks; j++)
-			norm += pow(one_image_features[i * dirSegSize + j], 2);
+			norm += pow(buffer[i * dirSegSize + j], 2);
 
 		norm = sqrt(norm);
 		for (int j = 0; j < dirSegSize * numOfBlocks; j++)
-		if (norm > 0) {
-			one_image_features[i * dirSegSize + j] /= norm;
-		}
+		if (norm > 0)
+			buffer[i * dirSegSize + j] /= norm;
 	}
 
 #if 0
@@ -168,19 +150,25 @@ vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSi
 	}
 #endif
 
-	vector<float> tmp;
-	tmp.reserve(one_image_features.size()*(nonlinear_n*2 + 1)*2);
-
-	for (size_t i = 0; i < one_image_features.size(); i++) {
+	for (size_t i = 0; i < buffer.size(); i++) {
 		for (int j = -nonlinear_n; j <= nonlinear_n; j++) {
-			auto x = phi(one_image_features[i], j * nonlinear_L);
-			tmp.push_back(x.first);
-			tmp.push_back(x.second);
+			auto x = phi(buffer[i], j * nonlinear_L);
+			feats.push_back(x.first);
+			feats.push_back(x.second);
 		}
 	}
+}
 
-	one_image_features.clear();
-	return tmp;
+void ExtractFeaturesForSample(const Mat& modDir, vector<float> &feats )
+{
+	feats.clear();
+
+	const int treeDepth(blockSizeX.size());
+
+	for (int i = 0; i < treeDepth; i++)
+	{
+		HOG(blockSizeX[i], blockSizeY[i], dirSegSize, modDir, feats);
+	}
 }
 
 // Exatract features from dataset.
@@ -189,29 +177,18 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features)
 	clock_t begin_time = clock();
 	std::cout << "Extract Features";
 
-	const int treeDepth(blockSizeX.size());
 	for (size_t image_idx = 0; image_idx < file_list.size(); ++image_idx) 
 	{
 		if ((image_idx + 1) % 500 == 0)
 			cout << ".";
 
-		vector<float> one_image_features;
-		for (int i = 0; i < treeDepth; i++)
-		{
-			Mat image;
-			// Read image from file
-			image = imread( file_list[image_idx].first.c_str(), 0 );
-			// Add image and it's label to dataset
-			//data_set->push_back(make_pair(image, file_list[image_idx].second));
+		Mat image;
+		image = imread(file_list[image_idx].first.c_str(), 0);
+		Mat modDir = countModAndDirOfGrad(image);
 
-			Mat modDir = countModAndDirOfGrad(image);
-
-			auto tmp = HOG(blockSizeX[i], blockSizeY[i], dirSegSize, modDir);
-			for (size_t k = 0; k < tmp.size(); k++) {
-				one_image_features.push_back(tmp[k]);
-			}
-		}
-		features->push_back(make_pair(one_image_features, file_list[image_idx].second));
+		features->push_back(make_pair(vector<float>(), file_list[image_idx].second));
+		//features->back().first.reserve(10000);
+		ExtractFeaturesForSample(modDir, features->back().first);
 	}
 
 	std::cout << "done" << std::endl;

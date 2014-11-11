@@ -23,7 +23,7 @@ namespace HOGFeatureClassifier
 	const vector<int> blockSizeY = { 4, 6 };
 	const int dirSegSize = 8;
 
-	const int nonlinear_n = 4;//2
+	const int nonlinear_n = 4;
 	const float nonlinear_L = 0.5;
 	const double param_C = 0.08;
 	//}
@@ -58,7 +58,9 @@ void SavePredictions(const TFileList& file_list,
 // Counting module and direction of gradients (3.3)
 Mat countModAndDirOfGrad(const Mat &in);
 
-vector<float> HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &image);
+void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &modDir, vector<float> &feats);
+
+void ExtractFeaturesForSample(const Mat& modDir, vector<float> &feats);
 
 // Exatract features from dataset.
 void ExtractFeatures(const TFileList& file_list, TFeatures* features);
