@@ -50,16 +50,37 @@ Mat countSobel(const Mat &in)
 
 	int rows = int(in.rows);
 	int cols = int(in.cols);
-	#if 0
+	#if 1
 	for (int i = 0; i < rows; i++)
 	for (int j = 0; j < cols; j++) {
 		sobel.at<Vec2s>(i, j).val[1] = ((i > 0) ? in.at<uchar>(i - 1, j) : 0) - ((i < rows - 1) ? in.at<uchar>(i + 1, j) : 0);
 		sobel.at<Vec2s>(i, j).val[0] = ((j < cols - 1) ? in.at<uchar>(i, j + 1) : 0) - ((j > 0) ? in.at<uchar>(i, j - 1) : 0);
 	}
 	#else
-	for (int i = 1; i < rows; i++)
-	for (int j = 1; j < cols; j++) {
+	for (int i = 1; i < rows - 1; i++)
+	{
+		for (int j = 1; j < cols - 1; j++)
+		{
+			sobel.at<Vec2s>(i, j).val[1] = in.at<uchar>(i - 1, j) - in.at<uchar>(i + 1, j);
+			sobel.at<Vec2s>(i, j).val[0] = in.at<uchar>(i, j + 1) - in.at<uchar>(i, j - 1);
+		}
+	}
+	for (int i = 1; i < rows - 1; i++)
+	{
+		int j = 0;
 		sobel.at<Vec2s>(i, j).val[1] = in.at<uchar>(i - 1, j) - in.at<uchar>(i + 1, j);
+		sobel.at<Vec2s>(i, j).val[0] = in.at<uchar>(i, j + 1);
+		j = cols-1;
+		sobel.at<Vec2s>(i, j).val[1] = in.at<uchar>(i - 1, j) - in.at<uchar>(i + 1, j);
+		sobel.at<Vec2s>(i, j).val[0] = -in.at<uchar>(i, j - 1);
+	}
+	for (int j = 1; j < cols - 1; j++)
+	{
+		int i = 0;
+		sobel.at<Vec2s>(i, j).val[1] = - in.at<uchar>(i + 1, j);
+		sobel.at<Vec2s>(i, j).val[0] = in.at<uchar>(i, j + 1) - in.at<uchar>(i, j - 1);
+		i = rows-1;
+		sobel.at<Vec2s>(i, j).val[1] = in.at<uchar>(i - 1, j);
 		sobel.at<Vec2s>(i, j).val[0] = in.at<uchar>(i, j + 1) - in.at<uchar>(i, j - 1);
 	}
 	#endif
@@ -112,7 +133,9 @@ void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const
 	}
 
 	// normalization of histograms (3.5)
-	int numOfBlocks(2); // normalizing blocks with norm of numOfBlocks blocks
+
+#if 0
+	int numOfBlocks = 1;
 	for (int i = 0; i < blockSizeX * blockSizeY; i += numOfBlocks) {
 		float norm(0);
 		for (int j = 0; j < dirSegSize * numOfBlocks; j++)
@@ -123,31 +146,18 @@ void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const
 		if (norm > 0)
 			buffer[i * dirSegSize + j] /= norm;
 	}
+#else
+	float norm = 0;
+	for (int j = 0; j < buffer.size(); j++)
+		norm += buffer[j] * buffer[j];
 
-#if 0
-	const int blockSX(8);
-	const int blockSY(8);
-	vector<int> colorR(blockSX * blockSY, 0);
-	vector<int> colorG(blockSX * blockSY, 0);
-	vector<int> colorB(blockSX * blockSY, 0);
-	vector<int> colNum(blockSX * blockSY, 0);
-
-	for (int i = 0; i < rows; i++)
-	for (int j = 0; j < cols; j++) {
-		int blockIndx = int(i * blockSY / rows) * blockSX +
-			int(j * blockSX / cols);
-		colorR[blockIndx] += (*image)(j, i)->Red;
-		colorG[blockIndx] += (*image)(j, i)->Green;
-		colorB[blockIndx] += (*image)(j, i)->Blue;
-		colNum[blockIndx]++;
-	}
-
-	for (size_t i = 0; i < colorR.size(); i++)
+	norm = sqrt(norm);
+	if (norm > 0)
 	{
-		one_image_features.push_back(colorR[i] / (255 * colNum[i]));
-		one_image_features.push_back(colorG[i] / (255 * colNum[i]));
-		one_image_features.push_back(colorB[i] / (255 * colNum[i]));
+		for (int j = 0; j < buffer.size(); j++)
+			buffer[j] /= norm;
 	}
+
 #endif
 
 	for (size_t i = 0; i < buffer.size(); i++) {

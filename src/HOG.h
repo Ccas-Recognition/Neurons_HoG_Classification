@@ -19,11 +19,11 @@
 namespace HOGFeatureClassifier
 {
 	//Context {
-	const vector<int> blockSizeX = { 4, 6 };
-	const vector<int> blockSizeY = { 4, 6 };
+	const vector<int> blockSizeX = { 4 };
+	const vector<int> blockSizeY = { 4 };
 	const int dirSegSize = 8;
 
-	const int nonlinear_n = 4;
+	const int nonlinear_n = 2; //3
 	const float nonlinear_L = 0.5;
 	const double param_C = 0.08;
 	//}
