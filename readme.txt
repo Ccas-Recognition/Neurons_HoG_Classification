@@ -14,3 +14,4 @@
 
 ToDo: расскоментить конвертирование Jpg To Bmp в файле train_test_picker.py
 
+icecream4 was here
