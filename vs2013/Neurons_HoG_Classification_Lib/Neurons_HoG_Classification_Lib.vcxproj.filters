@@ -39,6 +39,9 @@
     <ClCompile Include="..\liblinear\linear.cpp">
       <Filter>bridge</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\HOG_Functor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\liblinear\blas\blas.h">
@@ -50,14 +53,20 @@
     <ClInclude Include="..\liblinear\tron.h">
       <Filter>bridge</Filter>
     </ClInclude>
+    <ClInclude Include="..\liblinear\linear.h">
+      <Filter>bridge</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\HOG_Functor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\HOG.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\classifier.h">
+    <ClInclude Include="..\..\src\classifier.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\liblinear\linear.h">
-      <Filter>bridge</Filter>
+    <ClInclude Include="..\..\src\consts.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

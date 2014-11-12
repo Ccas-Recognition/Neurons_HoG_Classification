@@ -6,5 +6,7 @@ If Exist ..\..\repo\neuronsrecognition\hog\ (
 ::copy vs2013\liblinear\tron.h ..\..\repo\neuronsrecognition\hog\tron.h
 copy src\HOG_Functor.h ..\..\repo\neuronsrecognition\hog\HOG_Functor.h
 copy src\consts.h ..\..\repo\neuronsrecognition\hog\consts.h
-copy vs2013\Release\Neurons_HoG_Classification_Lib.lib ..\..\repo\neuronsrecognition\hog\hog.lib
+copy vs2013\Debug\Neurons_HoG_Classification_Lib.lib ..\..\repo\neuronsrecognition\hog\hogd.lib
+
+copy model_binary.txt ..\..\repo\neuronsrecognition\hog\hog_model.txt
 )

@@ -26,14 +26,14 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\classifier.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="argvparser\argvparser.h">
+      <Filter>bridge</Filter>
     </ClInclude>
     <ClInclude Include="..\src\HOG.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="argvparser\argvparser.h">
-      <Filter>bridge</Filter>
+    <ClInclude Include="..\src\classifier.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

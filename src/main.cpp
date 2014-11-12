@@ -1,10 +1,13 @@
 #include "HOG.h"
 #include "argvparser.h"
+#include "HOG_Functor.h"
 
 using CommandLineProcessing::ArgvParser;
 
 int main(int argc, char** argv) {
 	using namespace HOGFeatureClassifier;
+	HoGResponseFunctor functor;
+	functor.InitModel("Compilation Check");
 
     // Command line options parser
     ArgvParser cmd;

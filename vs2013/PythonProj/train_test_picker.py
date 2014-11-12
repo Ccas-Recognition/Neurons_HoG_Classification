@@ -6,13 +6,15 @@ import cv2
 ftest = open("../../data/neuron/test.txt", "w")
 ftrain = open("../../data/neuron/train.txt", "w")
 
-if 1:
+total_train = 1
+
+if total_train:
     sampling_count = 4915
-    #training_count = 4300
-    training_count = 4615
+    training_count = 4000
+    #training_count = 4615
 else:
-    sampling_count = 1000
-    training_count = 500
+    sampling_count = 2000
+    training_count = 1000
 
 training_data_dir_txt = 'total_data/'
 training_data_dir = '../../data/neuron/training_data/'
@@ -26,19 +28,22 @@ def bmpToJpg(subfolder, label):
 
     for file in onlyfiles[indx[:training_count]]:
         fileName, fileExtension = splitext(file)
-        if(fileExtension != '.jpg'):
-            continue
         ftrain.write(training_data_dir_txt + subfolder + file + ' ' + str(label) + '\n')
         #print([label, fileName])
 
-    for file in onlyfiles[indx[training_count:]]:
+    arr_tmp = []
+    if total_train:
+        arr_tmp = onlyfiles
+    else:
+        arr_tmp = onlyfiles[indx[training_count:]]
+
+    for file in arr_tmp:
+    #for file in onlyfiles:
         fileName, fileExtension = splitext(file)
-        if(fileExtension != '.jpg'):
-            continue
         ftest.write(training_data_dir_txt + subfolder + file + ' ' + str(label) + '\n')
         #print([label, fileName])
 
 bmpToJpg( 'fg/', 1)
-bmpToJpg( 'bg/', 2)
+bmpToJpg( 'bg/', 0)
 
 print('Sampling generated: %d training, %d testing'%((training_count*2), ((sampling_count - training_count)*2)))

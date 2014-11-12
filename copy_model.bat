@@ -1,0 +1,1 @@
+copy model_binary.txt ..\..\repo\neuronsrecognition\hog\hog_model.txt

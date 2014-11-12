@@ -5,14 +5,13 @@
 #include <string>
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
 #include <memory>
 
 #include "linear.h"
+#include "consts.h"
 
-using std::vector;
-using std::pair;
-using std::string;
-using std::auto_ptr;
+using namespace std;
 
 namespace HOGFeatureClassifier
 {
@@ -25,7 +24,7 @@ namespace HOGFeatureClassifier
 	class TModel {
 		// Pointer to liblinear model;
 		auto_ptr<struct model> model_;
-	public:
+	public:	
 		// Basic constructor
 		TModel() : model_(NULL) {}
 		// Construct class by liblinear model
@@ -41,8 +40,9 @@ namespace HOGFeatureClassifier
 			save_model(model_file.c_str(), model_.get());
 		}
 		// Load model from file
-		void Load(const string& model_file) {
+		bool Load(const string& model_file) {
 			model_ = auto_ptr<struct model>(load_model(model_file.c_str()));
+			return (model_.get() != 0);
 		}
 		// Get pointer to liblinear model
 		struct model* get() const {
@@ -63,7 +63,7 @@ namespace HOGFeatureClassifier
 
 		TClassifierParams() {
 			bias = -1;
-			solver_type = L2R_L2LOSS_SVC_DUAL;
+			solver_type = L2R_L2LOSS_SVC;//solver_type = L2R_L2LOSS_SVC_DUAL;
 			C = 0.1;
 			eps = 1e-4;
 			nr_weight = 0;
@@ -93,7 +93,7 @@ namespace HOGFeatureClassifier
 			std::cout << "number of samples: " << number_of_samples << std::endl;
 			std::cout << "number of features: " << number_of_features << std::endl;
 
-			vector<feature_node> data(number_of_samples*(number_of_features + 1));
+			vector<struct feature_node> data(number_of_samples*(number_of_features + 1));
 			//std::cout << "Setting up prob" << std::endl;
 			// Description of one problem
 
@@ -141,7 +141,7 @@ namespace HOGFeatureClassifier
 			delete[] prob.x;
 		}
 
-		void ConvertFeaturesToClassifierType(const vector<float>& features, vector< struct feature_node > &classifier_features) const
+		static void ConvertFeaturesToClassifierType(const vector<float>& features, vector< struct feature_node > &classifier_features)
 		{
 			classifier_features.clear();
 			for (int i = 0; i < features.size(); ++i)
@@ -154,15 +154,66 @@ namespace HOGFeatureClassifier
 			classifier_features.back().index = -1;
 		}
 
-		double ComputePredictValue(const vector< struct feature_node > &classifier_features, const TModel& model) const
+		static double ComputePredictValue(const vector< struct feature_node > &classifier_features, const TModel& model)
 		{
 			double arr[1];
 			predict_values(model.get(), &(classifier_features[0]), arr);
 			return arr[0];
 		}
 
+		static void ROC_Curve(const vector<float> &values, const vector<pair<string, int> > &file_list)
+		{
+			float max_value = 0.0f;
+			float min_value = 0.0f;
+			double sum_value = 0.0;
+			for (int i = 0; i < values.size(); ++i)
+			{
+				max_value = max(max_value, values[i]);
+				min_value = min(min_value, values[i]);
+				sum_value += double( values[i] );
+			}
+			sum_value /= values.size();
+			if (1)
+			{
+				cout << "min: " << min_value << endl;
+				cout << "max: " << max_value << endl;
+				//cout << "avg: " << sum_value << endl;
+			}
+			int iters = 100;
+			for (int k = 0; k < iters; ++k)
+			{
+				if ((k > 1) && (k < (iters / 5)) )
+					continue;
+				float t = max_value*float(k) / (iters+1);
+				int error1 = 0; //1 - right, 0 - predicted
+				int error2 = 0; //0 - right, 1 - predicted
+				for (int i = 0; i < values.size(); ++i)
+				{
+					int predict_value = int(values[i] > t);
+					if (file_list[i].second != predict_value)
+					{
+						if (file_list[i].second == 1)
+							++error1;
+						else
+							++error2;
+					}
+				}
+				float precision = 100 * float(values.size() - error1 - error2) / values.size();
+				float precision_error1 = 100 * (float(error1) / values.size());
+				float precision_error2 = 100 * (float(error2) / values.size());
+				if (precision_error2 < 0.00001f)
+					break;
+				printf("%10f (%10f, %10f): %10f\n", precision, precision_error1, precision_error2, t);
+				//cout << setprecision(4) << precision << " (" << precision_error1 << ", " << precision_error2 << ")" << ": " << t << endl;
+				//cout << "Precision: " << (precision*100.0f) << "%" << endl;
+				//cout << "Error 1 (1 - right, 0 - predicted): " <<  << "%" << endl;
+				//cout << "Error 2 (0 - right, 1 - predicted): " << (float(error2) / values.size() * 100) << "%" << endl;
+			}
+		}
+		
 		// Predict data
-		void Predict(const TFeatures& features, const TModel& model, TLabels* labels) {
+		static void Predict(const TFeatures& features, const TModel& model, TLabels* labels, const vector<pair<string, int> > &file_list)
+		{
 			// Number of samples and features must be nonzero
 			size_t number_of_samples = features.size();
 			assert(number_of_samples > 0);
@@ -171,16 +222,21 @@ namespace HOGFeatureClassifier
 
 			// Fill struct problem
 			vector< struct feature_node > x;
+			vector< float > values;
+			values.reserve(features.size());
 			x.reserve(number_of_features + 1);
 
-			//std::ofstream outfile("dump.txt");
+			std::ofstream outfile("dump.txt");
 			for (size_t sample_idx = 0; sample_idx < features.size(); ++sample_idx) 
 			{
 				ConvertFeaturesToClassifierType(features[sample_idx].first, x);
-				labels->push_back( int( predict( model.get(), &(x[0]) ) ) );
-
-				//outfile << labels->back() << " " << ComputePredictValue(x, model) << std::endl;
+				//labels->push_back( int( predict( model.get(), &(x[0]) ) ) );
+				values.push_back(ComputePredictValue(x, model));
+				labels->push_back(int(values.back() > 0));
+				outfile << labels->back() << " " << ComputePredictValue(x, model) << std::endl;
 			}
+
+			ROC_Curve(values, file_list);
 		}
 	};
 }//HOGFeatureClassifier

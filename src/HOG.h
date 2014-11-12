@@ -12,27 +12,18 @@
 #include "classifier.h"
 #include "linear.h"
 
-
 //#include <opencv2/core/core.hpp>
 #include "opencv2/opencv.hpp"
+#include "consts.h"
 
 namespace HOGFeatureClassifier
 {
-	//Context {
-	const vector<int> blockSizeX = { 4 };
-	const vector<int> blockSizeY = { 4 };
-	const int dirSegSize = 8;
-
-	const int nonlinear_n = 2; //3
-	const float nonlinear_L = 0.5;
-	const double param_C = 0.08;
-	//}
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-	using namespace cv;
+using namespace cv;
 using std::string;
 using std::vector;
 using std::ifstream;

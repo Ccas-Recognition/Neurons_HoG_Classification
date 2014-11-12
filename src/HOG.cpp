@@ -97,8 +97,8 @@ Mat countModAndDirOfGrad(const Mat &in)
 	for (size_t j = 0; j < sobel.cols; j++) {
 		auto x = sobel.at<Vec2s>(i, j).val[0];
 		auto y = sobel.at<Vec2s>(i, j).val[1];
-		module_direction.at<Vec2f>(i, j).val[0] = sqrt(x*x + y*y);
-		module_direction.at<Vec2f>(i, j).val[1] = atan2(y, x);
+		module_direction.at<Vec2f>(i, j).val[0] = sqrtf(float( x*x + y*y ));
+		module_direction.at<Vec2f>(i, j).val[1] = atan2(double(y), double(x));
 	}
 
 	return module_direction;
@@ -113,52 +113,89 @@ pair<float, float> phi(float x, float l)
 	}
 	return make_pair(a, b);
 }
-
+//static float MAX_DEBUG_VALUE = 0.0f; //DEBUG
 void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &modDir, vector<float> &feats )
 {
-	vector<float> buffer(blockSizeX * blockSizeY * dirSegSize);
+	vector<float> buffer;
+	buffer.reserve(blockSizeX * blockSizeY * dirSegSize + blockSizeX * blockSizeY + 1);
 
-	// counting hog (3.4)
 	const int rows = int(modDir.rows); // we use these ...
 	const int cols = int(modDir.cols); // ... not only one time
-	for (int i = 0; i < rows; i++)
-	for (int j = 0; j < cols; j++) {
-		int blockIndx = int(float( i * blockSizeY ) / rows) * blockSizeX +
-			int( float( j * blockSizeX ) / cols);
-		int angleIndx = int(((int(modDir.at<Vec2f>(i, j).val[1]) + M_PI) /
-			(2 * M_PI)) * dirSegSize);
+	#if 1
+		buffer.resize(blockSizeX * blockSizeY * dirSegSize);
+		vector<int> buffer_counts(blockSizeX * blockSizeY);
 
-		int featIndx = blockIndx * dirSegSize + angleIndx;
-		buffer[featIndx] += modDir.at<Vec2f>(i, j).val[0];
-	}
+		// counting hog (3.4)
+		for (int i = 1; i < rows-1; i++)
+		for (int j = 1; j < cols-1; j++) {
+			int blockIndx = int(float( i * blockSizeY ) / rows) * blockSizeX +
+				int( float( j * blockSizeX ) / cols);
+			int angleIndx = int(((int(modDir.at<Vec2f>(i, j).val[1]) + M_PI) /
+				(2 * M_PI)) * dirSegSize);
 
-	// normalization of histograms (3.5)
+			int featIndx = blockIndx * dirSegSize + angleIndx;
+			buffer[featIndx] += modDir.at<Vec2f>(i, j).val[0];
+			buffer_counts[blockIndx] += 1;
+		}
 
-#if 0
-	int numOfBlocks = 1;
-	for (int i = 0; i < blockSizeX * blockSizeY; i += numOfBlocks) {
-		float norm(0);
-		for (int j = 0; j < dirSegSize * numOfBlocks; j++)
-			norm += pow(buffer[i * dirSegSize + j], 2);
+		// normalization of histograms (3.5)
+		#if 1
+			for (int i = 0; i < blockSizeX * blockSizeY; ++i) 
+			{
+				for (int j = 0; j < dirSegSize; j++)
+					buffer[i * dirSegSize + j] /= buffer_counts[i];
+			}
+		#endif
+		#if 0
+				int numOfBlocks = 1;
+				for (int i = 0; i < blockSizeX * blockSizeY; i += numOfBlocks) {
+					float norm(0);
+					for (int j = 0; j < dirSegSize * numOfBlocks; j++)
+						norm += pow(buffer[i * dirSegSize + j], 2);
 
-		norm = sqrt(norm);
-		for (int j = 0; j < dirSegSize * numOfBlocks; j++)
-		if (norm > 0)
-			buffer[i * dirSegSize + j] /= norm;
-	}
-#else
-	float norm = 0;
-	for (int j = 0; j < buffer.size(); j++)
-		norm += buffer[j] * buffer[j];
+					norm = sqrt(norm);
+					for (int j = 0; j < dirSegSize * numOfBlocks; j++)
+					if (norm > 0)
+						buffer[i * dirSegSize + j] /= norm;
+				}
+		#else
+				float norm = 0;
+				for (int j = 0; j < buffer.size(); j++)
+					norm += buffer[j] * buffer[j];
 
-	norm = sqrt(norm);
-	if (norm > 0)
-	{
-		for (int j = 0; j < buffer.size(); j++)
-			buffer[j] /= norm;
-	}
+				norm = sqrt(norm);
+				if (norm > 0)
+				{
+					for (int j = 0; j < buffer.size(); j++)
+						buffer[j] /= norm;
+				}
 
-#endif
+		#endif
+	#endif
+
+	#if 0
+		vector<double> gradSum(blockSizeX * blockSizeY, 0.0);
+		vector<int> gradSumCount(blockSizeX * blockSizeY, 0);
+		double sumTotal = 0.0;
+		for (int i = 1; i < rows-1; i++)
+		{
+			for (int j = 1; j < cols-1; j++) 
+			{
+				int blockIndx = int(float(i * blockSizeY) / rows) * blockSizeX +
+					int(float(j * blockSizeX) / cols);
+				gradSumCount[blockIndx] += 1;
+				gradSum[blockIndx] += double( modDir.at<Vec2f>(i, j).val[0] );
+				sumTotal += double(modDir.at<Vec2f>(i, j).val[0]);
+			}
+		}
+		double gradSumMult = 1.0;
+		#if 1
+			for (int i = 0; i < gradSum.size(); ++i)
+				buffer.push_back(float(gradSumMult*gradSum[i] / gradSumCount[i]));
+		#endif
+			//MAX_DEBUG_VALUE = std::max(MAX_DEBUG_VALUE, float( sumTotal / (rows*cols) ) );//DEBUG
+		buffer.push_back(float(gradSumMult*sumTotal / (rows*cols)));
+	#endif
 
 	for (size_t i = 0; i < buffer.size(); i++) {
 		for (int j = -nonlinear_n; j <= nonlinear_n; j++) {
@@ -173,7 +210,7 @@ void ExtractFeaturesForSample(const Mat& modDir, vector<float> &feats )
 {
 	feats.clear();
 
-	const int treeDepth(blockSizeX.size());
+	const int treeDepth = blockSizeCount;
 
 	for (int i = 0; i < treeDepth; i++)
 	{
@@ -187,6 +224,8 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features)
 	clock_t begin_time = clock();
 	std::cout << "Extract Features";
 
+	Mat resizedImage = Mat(RESIZE_IMAGE_SIZE, RESIZE_IMAGE_SIZE, CV_8UC1);
+	
 	for (size_t image_idx = 0; image_idx < file_list.size(); ++image_idx) 
 	{
 		if ((image_idx + 1) % 500 == 0)
@@ -194,14 +233,18 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features)
 
 		Mat image;
 		image = imread(file_list[image_idx].first.c_str(), 0);
-		Mat modDir = countModAndDirOfGrad(image);
-
+		#if 1
+			resize(image, resizedImage, resizedImage.size());
+			Mat modDir = countModAndDirOfGrad(resizedImage);
+		#else 
+			Mat modDir = countModAndDirOfGrad(image);
+		#endif
 		features->push_back(make_pair(vector<float>(), file_list[image_idx].second));
 		//features->back().first.reserve(10000);
 		ExtractFeaturesForSample(modDir, features->back().first);
 	}
-
 	std::cout << "done" << std::endl;
+	//std::cout << "MAX_DEBUG_VALUE: " << MAX_DEBUG_VALUE << endl;//DEBUG
 	clock_t end_time = clock();
 	cout << "Extraction Time: " << (float(end_time - begin_time)/1000.0f) << endl;
 }
@@ -264,7 +307,7 @@ void PredictData(const string& data_file,
 	model.Load(model_file);
 	// Predict images by its features using 'model' and store predictions
 	// to 'labels'
-	classifier.Predict(features, model, &labels);
+	classifier.Predict(features, model, &labels, file_list);
 
 	// Save predictions
 	SavePredictions(file_list, labels, prediction_file);
