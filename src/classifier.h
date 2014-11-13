@@ -184,7 +184,7 @@ namespace HOGFeatureClassifier
 			{
 				if ((k > 1) && (k < (iters / 5)) )
 					continue;
-				float t = max_value*float(k) / (iters+1);
+				float t = max_value*float(k) / (iters);
 				int error1 = 0; //1 - right, 0 - predicted
 				int error2 = 0; //0 - right, 1 - predicted
 				for (int i = 0; i < values.size(); ++i)
@@ -201,9 +201,9 @@ namespace HOGFeatureClassifier
 				float precision = 100 * float(values.size() - error1 - error2) / values.size();
 				float precision_error1 = 100 * (float(error1) / values.size());
 				float precision_error2 = 100 * (float(error2) / values.size());
+				printf("%10f (%10f, %10f): %10f\n", precision, precision_error1, precision_error2, t);
 				if (precision_error2 < 0.00001f)
 					break;
-				printf("%10f (%10f, %10f): %10f\n", precision, precision_error1, precision_error2, t);
 				//cout << setprecision(4) << precision << " (" << precision_error1 << ", " << precision_error2 << ")" << ": " << t << endl;
 				//cout << "Precision: " << (precision*100.0f) << "%" << endl;
 				//cout << "Error 1 (1 - right, 0 - predicted): " <<  << "%" << endl;

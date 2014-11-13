@@ -189,14 +189,14 @@ void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const
 			}
 		}
 		double gradSumMult = 1.0;
-		#if 1
+		#if 0
 			for (int i = 0; i < gradSum.size(); ++i)
 				buffer.push_back(float(gradSumMult*gradSum[i] / gradSumCount[i]));
 		#endif
 			//MAX_DEBUG_VALUE = std::max(MAX_DEBUG_VALUE, float( sumTotal / (rows*cols) ) );//DEBUG
-		buffer.push_back(float(gradSumMult*sumTotal / (rows*cols)));
+		buffer.push_back(float(gradSumMult*sumTotal / ((rows-2)*(cols-2))));
 	#endif
-
+	#if 1
 	for (size_t i = 0; i < buffer.size(); i++) {
 		for (int j = -nonlinear_n; j <= nonlinear_n; j++) {
 			auto x = phi(buffer[i], j * nonlinear_L);
@@ -204,6 +204,12 @@ void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const
 			feats.push_back(x.second);
 		}
 	}
+	#else
+		for (size_t i = 0; i < buffer.size(); i++)
+		{
+			feats.push_back(buffer[i]);
+		}
+	#endif
 }
 
 void ExtractFeaturesForSample(const Mat& modDir, vector<float> &feats )
