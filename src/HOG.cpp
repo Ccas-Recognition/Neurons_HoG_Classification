@@ -113,6 +113,22 @@ pair<float, float> phi(float x, float l)
 	}
 	return make_pair(a, b);
 }
+
+float FastPredict(const Mat &modDir)
+{
+	double sumValue = 0.0;
+
+	for (int y = 1; y < modDir.rows - 1; ++y)
+	{
+		for (int x = 1; x < modDir.cols - 1; ++x)
+		{
+			sumValue += modDir.at<Vec2f>(y, x).val[0];
+		}
+	}
+	sumValue /= (modDir.rows - 2)*(modDir.cols - 2);
+	return float(sumValue);
+}
+
 //static float MAX_DEBUG_VALUE = 0.0f; //DEBUG
 void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &modDir, vector<float> &feats )
 {
@@ -224,6 +240,79 @@ void ExtractFeaturesForSample(const Mat& modDir, vector<float> &feats )
 	}
 }
 
+float FastPredictForSamples(const TFileList& file_list, vector< float > &fastFeatures )
+{
+	clock_t begin_time = clock();
+	std::cout << "Extract Fast Features";
+
+	fastFeatures.reserve( file_list.size() );
+	Mat resizedImage = Mat(RESIZE_IMAGE_SIZE, RESIZE_IMAGE_SIZE, CV_8UC1);
+
+	for (size_t image_idx = 0; image_idx < file_list.size(); ++image_idx)
+	{
+		if ((image_idx + 1) % 500 == 0)
+			cout << ".";
+		Mat image;
+		image = imread(file_list[image_idx].first.c_str(), 0);
+		resize(image, resizedImage, resizedImage.size());
+		Mat modDir = countModAndDirOfGrad(resizedImage);
+
+		fastFeatures.push_back( FastPredict(modDir) );
+		#if 0
+		{
+			cout << endl << "value: " << fastFeatures.back();
+			imshow("modDir", resizedImage);
+			char c = waitKey(0); 
+		}
+		#endif
+	}
+	//std::cout << "MAX_DEBUG_VALUE: " << MAX_DEBUG_VALUE << endl;//DEBUG
+	clock_t end_time = clock();
+
+	std::cout << "done. ";
+	cout << "Fast Feature Extraction Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
+}
+
+void FindMinMaxFastPredictValues(const TFileList& file_list, const vector< float > &fastFeatures)
+{
+	float minValue = 1000.0f;
+	float maxValue = 0.0f;
+
+	for (size_t image_idx = 0; image_idx < file_list.size(); ++image_idx)
+	{
+		#if 0
+			cout << fastFeatures[image_idx] << endl;
+			imshow("Image", Mat::zeros(100, 100, CV_8U));
+			waitKey(0);
+		#endif
+		if (file_list[image_idx].second == 1)
+			minValue = min(minValue, fastFeatures[image_idx]);
+		else
+			maxValue = max(maxValue, fastFeatures[image_idx]);
+	}
+	int error2 = 0;
+	for (size_t i = 0; i < file_list.size(); ++i)
+	{
+		if (file_list[i].second == 0)
+		{
+			if (fastFeatures[i] > minValue)
+			{
+				++error2;
+			}
+			else
+			{
+				#if 0
+					imshow("Image", imread(file_list[i].first.c_str()));
+					waitKey(0);
+				#endif
+			}
+		}
+	}
+	float _error2 = float(error2) / file_list.size() * 100.0f;
+	cout << "MinMax: (" << minValue << ", " << maxValue << ")" << endl;
+	cout << "Fast Predict Error: " << _error2 << endl;
+}
+
 // Exatract features from dataset.
 void ExtractFeatures(const TFileList& file_list, TFeatures* features)
 {
@@ -249,7 +338,7 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features)
 		//features->back().first.reserve(10000);
 		ExtractFeaturesForSample(modDir, features->back().first);
 	}
-	std::cout << "done" << std::endl;
+	std::cout << "done. ";
 	//std::cout << "MAX_DEBUG_VALUE: " << MAX_DEBUG_VALUE << endl;//DEBUG
 	clock_t end_time = clock();
 	cout << "Extraction Time: " << (float(end_time - begin_time)/1000.0f) << endl;
@@ -270,6 +359,9 @@ void TrainClassifier(const string& data_file, const string& model_file) {
 	LoadFileList(data_file, &file_list);
 	// Extract features from images
 
+	vector<float> fastFeatures;
+	FastPredictForSamples(file_list, fastFeatures);
+	FindMinMaxFastPredictValues(file_list, fastFeatures);
 	ExtractFeatures(file_list, &features);
 
 	// PLACE YOUR CODE HERE

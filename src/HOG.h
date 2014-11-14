@@ -51,6 +51,8 @@ Mat countModAndDirOfGrad(const Mat &in);
 
 void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &modDir, vector<float> &feats);
 
+float FastPredict(const Mat &modDir);
+
 void ExtractFeaturesForSample(const Mat& modDir, vector<float> &feats);
 
 // Exatract features from dataset.
