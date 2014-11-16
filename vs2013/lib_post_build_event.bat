@@ -1,5 +1,5 @@
-cd ..
-If Exist ..\..\repo\neuronsrecognition\hog\ ( 
+::cd ..
+::If Exist ..\..\repo\neuronsrecognition\hog\ ( 
 ::copy src\HOG.h ..\..\repo\neuronsrecognition\hog\HOG.h
 ::copy src\classifier.h ..\..\repo\neuronsrecognition\hog\classifier.h
 ::copy vs2013\liblinear\linear.h ..\..\repo\neuronsrecognition\hog\linear.h
@@ -7,4 +7,4 @@ If Exist ..\..\repo\neuronsrecognition\hog\ (
 ::copy src\HOG_Functor.h ..\..\repo\neuronsrecognition\hog\HOG_Functor.h
 ::copy src\consts.h ..\..\repo\neuronsrecognition\hog\consts.h
 ::copy vs2013\Release\Neurons_HoG_Classification_Lib.lib ..\..\repo\neuronsrecognition\hog\hog.lib
-)
+::)

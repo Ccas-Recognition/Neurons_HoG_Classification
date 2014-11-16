@@ -8,6 +8,7 @@ model_binary.txt
 data/neuron/*
 data/images/*
 vs2013/Debug/*
+vs2013/ipch/*
 vs2013/Release/*
 vs2013/dump/*
 vs2013/Neurons_HoG_Classification_Lib/Debug/*
