@@ -4,51 +4,23 @@
 #include <vector>
 #include <string>
 #include <cstdlib>
+#include <sstream>
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <memory>
+#include <cassert>
 
 #include "linear.h"
+#include "ImageRecognition.h"
 #include "consts.h"
 
 using namespace std;
 
 namespace HOGFeatureClassifier
 {
-
 	typedef vector<pair<vector<float>, int> > TFeatures;
 	typedef vector<int> TLabels;
-
-	// Model of classifier to be trained
-	// Encapsulates 'struct model' from liblinear
-	class TModel {
-		// Pointer to liblinear model;
-		auto_ptr<struct model> model_;
-	public:	
-		// Basic constructor
-		TModel() : model_(NULL) {}
-		// Construct class by liblinear model
-		TModel(struct model* model) : model_(model) {}
-		// Operator = for liblinear model
-		TModel& operator=(struct model* model) {
-			model_ = auto_ptr<struct model>(model);
-			return *this;
-		}
-		// Save model to file
-		void Save(const string& model_file) const {
-			assert(model_.get());
-			save_model(model_file.c_str(), model_.get());
-		}
-		// Load model from file
-		bool Load(const string& model_file) {
-			model_ = auto_ptr<struct model>(load_model(model_file.c_str()));
-			return (model_.get() != 0);
-		}
-		// Get pointer to liblinear model
-		struct model* get() const {
-			return model_.get();
-		}
-	};
 
 	// Parameters for classifier training
 	// Read more about it in liblinear documentation

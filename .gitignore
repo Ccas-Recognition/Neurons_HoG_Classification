@@ -6,8 +6,10 @@ bridge.touch
 model_binary.txt
 *.o
 data/neuron/*
+data/images/*
 vs2013/Debug/*
 vs2013/Release/*
+vs2013/dump/*
 vs2013/Neurons_HoG_Classification_Lib/Debug/*
 vs2013/Neurons_HoG_Classification_Lib/Release/*
 *.opensdf

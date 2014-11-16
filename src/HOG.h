@@ -12,9 +12,11 @@
 #include "classifier.h"
 #include "linear.h"
 
-//#include <opencv2/core/core.hpp>
-#include "opencv2/opencv.hpp"
+#include <opencv2/core/core.hpp>
 #include "consts.h"
+
+#include "SlidingWindow.h"
+#include "HOG_Functor.h"
 
 namespace HOGFeatureClassifier
 {
@@ -60,7 +62,7 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features);
 
 // Train SVM classifier using data from 'data_file' and save trained model
 // to 'model_file'
-void TrainClassifier(const string& data_file, const string& model_file);
+TModel TrainClassifier(const string& data_file, const string &images_list, const string& model_file);
 
 // Predict data from 'data_file' using model from 'model_file' and
 // save predictions to 'prediction_file'

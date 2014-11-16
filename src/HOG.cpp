@@ -1,6 +1,13 @@
 
+#include "ImageRecognition.h"
 #include "HOG.h"
+#include "SlidingWindowOptimizataion.h"
+#include <sstream>
 #include <time.h>
+#include <opencv2/opencv.hpp>
+
+using ImageRecognition::GetRectsFromImage;
+using ImageRecognition::FindOptimalThresholdForModel;
 
 namespace HOGFeatureClassifier
 {
@@ -240,7 +247,7 @@ void ExtractFeaturesForSample(const Mat& modDir, vector<float> &feats )
 	}
 }
 
-float FastPredictForSamples(const TFileList& file_list, vector< float > &fastFeatures )
+void FastPredictForSamples(const TFileList& file_list, vector< float > &fastFeatures )
 {
 	clock_t begin_time = clock();
 	std::cout << "Extract Fast Features";
@@ -273,7 +280,7 @@ float FastPredictForSamples(const TFileList& file_list, vector< float > &fastFea
 	cout << "Fast Feature Extraction Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
 }
 
-void FindMinMaxFastPredictValues(const TFileList& file_list, const vector< float > &fastFeatures)
+float FindOptimalFastPredictValues(const TFileList& file_list, const vector< float > &fastFeatures)
 {
 	float minValue = 1000.0f;
 	float maxValue = 0.0f;
@@ -311,6 +318,8 @@ void FindMinMaxFastPredictValues(const TFileList& file_list, const vector< float
 	float _error2 = float(error2) / file_list.size() * 100.0f;
 	cout << "MinMax: (" << minValue << ", " << maxValue << ")" << endl;
 	cout << "Fast Predict Error: " << _error2 << endl;
+
+	return minValue;
 }
 
 // Exatract features from dataset.
@@ -343,9 +352,10 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features)
 	clock_t end_time = clock();
 	cout << "Extraction Time: " << (float(end_time - begin_time)/1000.0f) << endl;
 }
+
 // Train SVM classifier using data from 'data_file' and save trained model
 // to 'model_file'
-void TrainClassifier(const string& data_file, const string& model_file) {
+TModel TrainClassifier(const string& data_file, const string &images_list, const string& model_file) {
 	// List of image file names and its labels
 	TFileList file_list;
 	// Structure of features of images and its labels
@@ -361,7 +371,7 @@ void TrainClassifier(const string& data_file, const string& model_file) {
 
 	vector<float> fastFeatures;
 	FastPredictForSamples(file_list, fastFeatures);
-	FindMinMaxFastPredictValues(file_list, fastFeatures);
+	model.setFastPredictValue( FindOptimalFastPredictValues(file_list, fastFeatures) );
 	ExtractFeatures(file_list, &features);
 
 	// PLACE YOUR CODE HERE
@@ -373,44 +383,35 @@ void TrainClassifier(const string& data_file, const string& model_file) {
 	classifier.Train(features, &model);
 	// Save model to file
 	model.Save(model_file);
+
+	if (images_list != "")
+	{
+		float model_threshold = FindOptimalThresholdForModel( images_list, model );
+		model.setModelThreshold(model_threshold);
+		model.Save(model_file);
+	}
+	return model;
 }
 
-// Predict data from 'data_file' using model from 'model_file' and
-// save predictions to 'prediction_file'
 void PredictData(const string& data_file,
 	const string& model_file,
 	const string& prediction_file) {
-	// List of image file names and its labels
+
 	TFileList file_list;
-	// Structure of images and its labels
-	//TDataSet data_set;
-	// Structure of features of images and its labels
 	TFeatures features;
-	// List of image labels
 	TLabels labels;
 
-	// Load list of image file names and its labels
+	TModel model;
+	model.Load(model_file);
+
 	LoadFileList(data_file, &file_list);
-	// Load images
-	//LoadImages(file_list, &data_set);
-	// Extract features from images
 
 	ExtractFeatures(file_list, &features);
 
-	// Classifier 
 	TClassifier classifier = TClassifier(TClassifierParams());
-	// Trained model
-	TModel model;
-	// Load model from file
-	model.Load(model_file);
-	// Predict images by its features using 'model' and store predictions
-	// to 'labels'
 	classifier.Predict(features, model, &labels, file_list);
 
-	// Save predictions
 	SavePredictions(file_list, labels, prediction_file);
-	// Clear dataset structure
-	//ClearDataset(&data_set);
 }
 
 }

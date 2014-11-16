@@ -102,6 +102,9 @@ lib_post_build_event.bat</Command>
   <ItemGroup>
     <ClCompile Include="..\..\src\HOG.cpp" />
     <ClCompile Include="..\..\src\HOG_Functor.cpp" />
+    <ClCompile Include="..\..\src\ImageRecognition.cpp" />
+    <ClCompile Include="..\..\src\preprocessing.cpp" />
+    <ClCompile Include="..\..\src\SlidingWindowOptimization.cpp" />
     <ClCompile Include="..\liblinear\blas\daxpy.c" />
     <ClCompile Include="..\liblinear\blas\ddot.c" />
     <ClCompile Include="..\liblinear\blas\dnrm2.c" />
@@ -114,7 +117,11 @@ lib_post_build_event.bat</Command>
     <ClInclude Include="..\..\src\consts.h" />
     <ClInclude Include="..\..\src\HOG.h" />
     <ClInclude Include="..\..\src\HOG_Functor.h" />
+    <ClInclude Include="..\..\src\ImageRecognition.h" />
+    <ClInclude Include="..\..\src\preprocessing.h" />
     <ClInclude Include="..\..\src\SlidingWindow.h" />
+    <ClInclude Include="..\..\src\SlidingWindowOptimizataion.h" />
+    <ClInclude Include="..\..\src\utils.h" />
     <ClInclude Include="..\liblinear\blas\blas.h" />
     <ClInclude Include="..\liblinear\blas\blasp.h" />
     <ClInclude Include="..\liblinear\linear.h" />

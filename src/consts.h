@@ -1,6 +1,9 @@
 #ifndef HOG_FEATURES_AND_CLASSIFIER_MMP_CONSTS
 #define HOG_FEATURES_AND_CLASSIFIER_MMP_CONSTS
 
+#define OUTPUT_TO_CONSOLE 1
+#define DUMP_IMAGES 1
+
 namespace HOGFeatureClassifier
 {
 	//best 77.48 {3, 6}, 8, norm all, without sum of edges
@@ -12,11 +15,17 @@ namespace HOGFeatureClassifier
 
 	const int RESIZE_IMAGE_SIZE = 24;
 
-	const float MODEL_THRESHOLD = 0.0;//4.55   
 	const int nonlinear_n = 2; //3
 	const float nonlinear_L = 0.5;
 	const double param_C = 0.08;
 	//}
+}
+namespace ImageRecognition
+{
+	//unsigned int sizes_[] = { 60 };
+	const unsigned int sizes_[] = { 24, 36, 48, 60 };
+	const unsigned int STANDART_WINDOW_SIZE = 24;
+	const unsigned int STANDART_WINDOW_STEP = 4;
 }
 
 #endif
