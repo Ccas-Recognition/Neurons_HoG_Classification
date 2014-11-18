@@ -2,18 +2,20 @@
 #include "argvparser.h"
 
 #include <opencv2/opencv.hpp>
+#include <fstream>
 
 using CommandLineProcessing::ArgvParser;
 //using ImageRecognition::TModel;
 using namespace cv;
+using namespace std;
 
 int main(int argc, char** argv) {
-	#ifdef WIN32
-		system("del /Q dump");
-	#else
-		system("rm -r dump");
-		system("mkdir dump");
-	#endif
+
+	using namespace HOGFeatureClassifier;
+	RecognitionStatistics stat;
+	stat.flOutputInfo = true;
+	stat.flOutputTime = true;
+	stat.SetDumpDebugImages(true);
 
     // Command line options parser
     ArgvParser cmd;
@@ -25,6 +27,8 @@ int main(int argc, char** argv) {
     cmd.defineOption("model", "Path to file to save or load model",
         ArgvParser::OptionRequiresValue | ArgvParser::OptionRequired);
 	cmd.defineOption("data_set", "File with dataset",
+		ArgvParser::OptionRequiresValue);
+	cmd.defineOption("context", "Context to HOG training",
 		ArgvParser::OptionRequiresValue);
     cmd.defineOption("predicted_labels", "Path to file to save prediction results",
         ArgvParser::OptionRequiresValue);
@@ -48,6 +52,7 @@ int main(int argc, char** argv) {
 	cmd.defineOptionAlternative("image", "i");
 	cmd.defineOptionAlternative("sliding_window", "s");
 	cmd.defineOptionAlternative("optimize_threshold", "o");
+	cmd.defineOptionAlternative("context", "c");
         // Parse options
     int result = cmd.parse(argc, argv);
 
@@ -71,7 +76,16 @@ int main(int argc, char** argv) {
 		string images_list = "";
 		if (cmd.foundOption("images_set"))
 			string images_list = cmd.optionValue("images_set");
-		ImageRecognition::TrainHOGClassifier(data_file, images_list, model_file);
+		
+		HOGContext context;
+		if (cmd.foundOption("context"))
+		{
+			string context_file = cmd.optionValue("context");
+			ifstream input_context(context_file);
+			if (input_context.is_open())
+				context.Load(input_context);
+		}
+		ImageRecognition::TrainHOGClassifier(data_file, images_list, model_file, context, stat);
 	}
     if (predict) 
 	{
@@ -81,14 +95,14 @@ int main(int argc, char** argv) {
             return 1;
         }
         string prediction_file = cmd.optionValue("predicted_labels");
-		ImageRecognition::PredictData(data_file, model_file, prediction_file);
+		ImageRecognition::PredictData(data_file, model_file, prediction_file, stat);
     }
 	
 	if (optimize_threshold)
 	{
 		string images_list = cmd.optionValue("images_set");
 
-		ImageRecognition::OptimizeThresholdsInModel(images_list, model_file);
+		ImageRecognition::OptimizeThresholdsInModel(images_list, model_file, stat);
 	}
 	
 	if (sliding_window)
@@ -96,7 +110,7 @@ int main(int argc, char** argv) {
 		string image_filepath = cmd.optionValue("image");
 		Mat image = imread(image_filepath, 0);
 		vector< ImageRecognition::SlidingRect > rects;
-		ImageRecognition::ResponseImage(rects, image, model_file);
+		ImageRecognition::ResponseImage(rects, image, model_file, stat);
 		
 		Mat output_image = imread(image_filepath);
 		for (int i = 0; i<rects.size(); ++i)

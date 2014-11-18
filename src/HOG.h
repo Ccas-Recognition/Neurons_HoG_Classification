@@ -49,26 +49,27 @@ void SavePredictions(const TFileList& file_list,
 	const string& prediction_file);
 
 // Counting module and direction of gradients (3.3)
-Mat countModAndDirOfGrad(const Mat &in);
+Mat countModAndDirOfGrad(const Mat &in, const HOGContext& context, RecognitionStatistics &stat);
 
-void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &modDir, vector<float> &feats);
+void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &modDir, vector<float> &feats, const HOGContext& context, RecognitionStatistics &stat);
 
-float FastPredict(const Mat &modDir);
+float FastPredict(const Mat &modDir, const HOGContext& context, RecognitionStatistics &stat);
 
-void ExtractFeaturesForSample(const Mat& modDir, vector<float> &feats);
+void ExtractFeaturesForSample(const Mat& modDir, vector<float> &feats, const HOGContext& context, RecognitionStatistics &stat);
 
 // Exatract features from dataset.
-void ExtractFeatures(const TFileList& file_list, TFeatures* features);
+void ExtractFeatures(const TFileList& file_list, TFeatures* features, const HOGContext& context, RecognitionStatistics &stat);
 
 // Train SVM classifier using data from 'data_file' and save trained model
 // to 'model_file'
-TModel TrainClassifier(const string& data_file, const string &images_list, const string& model_file);
+TModel TrainClassifier(const string& data_file, const string &images_list, const string& model_file, const HOGContext& context, RecognitionStatistics &stat);
 
 // Predict data from 'data_file' using model from 'model_file' and
 // save predictions to 'prediction_file'
 void PredictData(const string& data_file,
 	const string& model_file,
-	const string& prediction_file);
+	const string& prediction_file,
+	RecognitionStatistics &stat);
 
 }//HOGFeatureClassifier
 #endif //HOG_FEATURES_AND_CLASSIFIER_MMP

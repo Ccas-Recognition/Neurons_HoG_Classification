@@ -9,22 +9,6 @@ namespace HOGFeatureClassifier
 {
 	using namespace std;
 	using namespace cv;
-
-	bool HoGResponseFunctor::InitModel(const TModel *_model)
-	{
-		model = auto_ptr< struct TModel >(new TModel(*_model));
-		return true;
-	}
-
-	bool HoGResponseFunctor::InitModel(string model_name)
-	{
-		model = auto_ptr< struct TModel >(new TModel());
-
-		bool loaded = model->Load(model_name);
-		if (!loaded)
-			return false;
-		return true;
-	}
 	/*
 	Mat ComputeintegralImage( const Mat &input_image )
 	{
@@ -93,12 +77,28 @@ namespace HOGFeatureClassifier
 		#endif
 		return intMod;
 	}
+	bool HoGResponseFunctor::InitModel(const TModel *_model)
+	{
+		model = auto_ptr< struct TModel >(new TModel(*_model));
+		return true;
+	}
+
+	bool HoGResponseFunctor::InitModel(string model_name)
+	{
+		model = auto_ptr< struct TModel >(new TModel());
+
+		bool loaded = model->Load(model_name);
+		if (!loaded)
+			return false;
+		return true;
+	}
 	bool HoGResponseFunctor::Init(const Mat& _image, const Mat& _additionalImage)
 	{
 		DEBUG_COUNT_OPERATOR = 0;
 		image = _image;
-		modDir = countModAndDirOfGrad(image);
-		integralImage = ComputeintegralImage(_additionalImage);
+		additionalImage = _additionalImage;
+		modDir = countModAndDirOfGrad(image, model->GetContext(), stat);
+		integralImage = ComputeintegralImage(additionalImage);
 		return true;
 	}
 
@@ -125,9 +125,9 @@ namespace HOGFeatureClassifier
 		}
 
 		const Mat part = modDir(Range(pos_y, pos_y + height), Range(pos_x, pos_x + width));
-        ExtractFeaturesForSample(part, features);
-		TClassifier::ConvertFeaturesToClassifierType(features, classifier_features);
-		float value = float(TClassifier::ComputePredictValue(classifier_features, *(model.get())));
+		ExtractFeaturesForSample( part, features, model->GetContext(), stat );
+		TClassifier::ConvertFeaturesToClassifierType(features, classifier_features, stat);
+		float value = float(TClassifier::ComputePredictValue(classifier_features, *(model.get()), stat));
 		return value;
 	}
 }

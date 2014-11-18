@@ -3,6 +3,8 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "ImageRecognition.h"
+
 using namespace std;
 using namespace cv;
 
@@ -11,9 +13,9 @@ namespace ImageRecognition
 	class preprocessing
 	{
 	public:
-		preprocessing();
-		preprocessing( int _smooth_radius, double _subtr_val, double _thresh_coeff );
-		preprocessing( const preprocessing& orig );
+		preprocessing( RecognitionStatistics &_stat );
+		preprocessing(int _smooth_radius, double _subtr_val, double _thresh_coeff, RecognitionStatistics &_stat);
+		preprocessing(const preprocessing& orig, RecognitionStatistics &stat);
 		 virtual ~preprocessing();
 		void do_prep( const char * , Mat& );
 		void do_prep(Mat image, Mat& output_image);
@@ -31,6 +33,7 @@ namespace ImageRecognition
 		int	   smooth_radius;
 		double subtr_val;
 		double thresh_coeff;
+		RecognitionStatistics &stat;
 		static const int iter_num = 20;
 
 		static uchar clamp( double value, uchar min, uchar max );

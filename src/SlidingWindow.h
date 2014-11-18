@@ -5,6 +5,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <sstream>
 
+#include "ImageRecognition.h"
 #include "consts.h"
 #include "utils.h"
 
@@ -20,18 +21,19 @@ class SlidingWindowFragmentation
     int standartWindowOffset;
     Size standartWindow;
     vector<float> scales;
-    vector<unsigned int> sizes;
+    vector<int> sizes;
     float standartWindowSizeToImageSizeRatio;
 
     Mat baseImage, basePrepImage;
-
+	RecognitionStatistics &stat;
+	const HOGContext &context;
 public:
-	SlidingWindowFragmentation(Mat _image, Mat _prepImage, unsigned int _standartWindowSize,
-                                unsigned int _standartWindowOffset, vector<unsigned int> _sizes )
+	SlidingWindowFragmentation(Mat _image, Mat _prepImage, const HOGContext &_context, RecognitionStatistics &_stat) :
+		stat(_stat), context(_context)
     {
-        sizes = _sizes;
-        standartWindowSize = _standartWindowSize;
-        standartWindowOffset = _standartWindowOffset;
+        sizes = context.slidingWindowSizes;
+		standartWindowSize = context.standartSlidingWindowSize;
+		standartWindowOffset = context.standartslidingWindowStep;
 
         standartWindow = Size( standartWindowSize, standartWindowSize );
 
@@ -111,9 +113,8 @@ public:
             #endif
         }
 		clock_t end_time = clock();
-		#if OUTPUT_TO_CONSOLE == 1
+		if (stat.flOutputTime)
 			cout << "Sliding Window Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
-		#endif
 		using Utils::sqr;
         for(int i=0; i<rects.size(); ++i)
         {
@@ -161,7 +162,7 @@ public:
 		Mat prepImage = Mat(h, w, CV_8U);
 		resize(basePrepImage, prepImage, prepImage.size(), 0.0, 0.0, CV_INTER_NN);
 		
-		if (DUMP_IMAGES == 1)
+		if (stat.flDumpDebugImages)
 		{
 			imwrite("dump/resizedImage_" + int2str(scale_index) + ".jpg", image);
 			Mat tmp = prepImage * 255;
@@ -170,9 +171,9 @@ public:
 		}
 
 		clock_t begin_time = clock();
-		#if OUTPUT_TO_CONSOLE == 1
+		if (stat.flOutputInfo)
 			std::cout << "Response image";
-		#endif
+
         response.Init( image, prepImage );
 
         int response_width = w/standartWindowOffset - standartWindowSize/standartWindowOffset - 1;
@@ -182,10 +183,9 @@ public:
 
         for( int i=0; i<responseImage.rows; ++i )
         {
-			#if OUTPUT_TO_CONSOLE == 1
+			if (stat.flOutputInfo)
             if((i+1)%10 == 0)
                 cout << ".";
-			#endif
 
             int y = i*standartWindowOffset;
 
@@ -197,13 +197,17 @@ public:
                 maxResponse = max(maxResponse, responseImage.at<float>(i, j));
             }
         }
-		#if OUTPUT_TO_CONSOLE == 1
+		if (stat.flOutputInfo)
+		{
 			cout << "*" << endl;
-			clock_t end_time = clock();
-			cout << "Response Image Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
 			//cout << "maxResponse: " << maxResponse << endl;
 			//cout << "debug count operator: " << response.DEBUG_COUNT_OPERATOR << endl;
-		#endif
+		}
+		if (stat.flOutputTime)
+		{
+			clock_t end_time = clock();
+			cout << "Response Image Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
+		}
         //responseImage /= maxResponse;
         //responseImage *= 255;
         /*

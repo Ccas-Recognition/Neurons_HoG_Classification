@@ -23,14 +23,16 @@ namespace HOGFeatureClassifier
 	{
 		Mat image, modDir;
 		Mat integralImage;
+		Mat additionalImage;
 		auto_ptr< struct TModel > model;
+		RecognitionStatistics &stat;
 	private:
 		vector< float > features;
 		vector< struct feature_node > classifier_features;
 		float ComputeFastPredict(int x, int y, int w, int h);
 	public:
 		int DEBUG_COUNT_OPERATOR;
-
+		HoGResponseFunctor(RecognitionStatistics &_stat) :stat(_stat) {};
 		bool InitModel(string model_name);
 		bool InitModel(const TModel *_model);
 		bool Init(const Mat& _image, const Mat& _additionalImage);

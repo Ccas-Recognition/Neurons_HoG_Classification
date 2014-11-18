@@ -1,20 +1,21 @@
 ﻿#include "preprocessing.h"
 #include "consts.h"
+#include "utils.h"
 #include <cmath>
-
 namespace ImageRecognition
 {
-	preprocessing::preprocessing()
-		: smooth_radius(31), subtr_val(3.2), thresh_coeff(0.65)
+	preprocessing::preprocessing(RecognitionStatistics &_stat)
+		: smooth_radius(31), subtr_val(3.2), thresh_coeff(0.65), stat(_stat)
 	{
 	}
 
-	preprocessing::preprocessing(int _smooth_radius, double _subtr_val, double _thresh_coeff)
-		: smooth_radius(_smooth_radius), subtr_val(_subtr_val), thresh_coeff(_thresh_coeff)
+	preprocessing::preprocessing(int _smooth_radius, double _subtr_val, double _thresh_coeff, RecognitionStatistics &_stat)
+		: smooth_radius(_smooth_radius), subtr_val(_subtr_val), thresh_coeff(_thresh_coeff), stat(_stat)
 	{
 	}
 
-	preprocessing::preprocessing(const preprocessing& orig)
+	preprocessing::preprocessing(const preprocessing& orig, RecognitionStatistics &_stat):
+		stat(_stat)
 	{
 		if (main_image.data) {
 			main_image = orig.main_image.clone();
@@ -79,12 +80,14 @@ namespace ImageRecognition
 				output_image.at<uchar>(y, x) = (output_image.at<uchar>(y, x) == 0) ? 1 : 0;
 			}
 		}
-		#if DUMP_IMAGES == 1
-			imwrite("dump/image.bmp", main_image);
+		if (stat.flDumpDebugImages)
+		{
+			static int index = 1;
+			imwrite("dump/image"+ Utils::int2str(index++) +".bmp", main_image);
 			Mat tmp = output_image * 255;
 			bitwise_not(tmp, tmp);
-			imwrite("dump/bw.bmp", tmp);
-		#endif
+			imwrite("dump/bw" + Utils::int2str(index++) + ".bmp", tmp);
+		}
 	}
 
 

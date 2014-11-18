@@ -12,41 +12,42 @@ using namespace cv;
 
 namespace ImageRecognition
 {
-	void ResponseImage(vector<ImageRecognition::SlidingRect> &rects, const Mat &image, const TModel &model)
+	void ResponseImage(vector<ImageRecognition::SlidingRect> &rects, const Mat &image, const TModel &model, RecognitionStatistics &stat)
 	{
-		GetRectsFromImage(rects, image, model);
+		GetRectsFromImage(rects, image, model, stat);
 		for (int i = 0; i < rects.size(); ++i)
 			rects[i].falseDetection = (rects[i].value < model.getModelThreshold());
 	}
 
-	void ResponseImage(vector<ImageRecognition::SlidingRect> &rects, const Mat &image, const string &model_filename)
+	void ResponseImage(vector<ImageRecognition::SlidingRect> &rects, const Mat &image, const string &model_filename, RecognitionStatistics &stat)
 	{
 		TModel model;
 		model.Load(model_filename);
-		ResponseImage(rects, image, model);
+		ResponseImage(rects, image, model, stat);
 	}
 
-	void GetRectsFromImage(vector<ImageRecognition::SlidingRect> &rects, const Mat &image, const TModel &model)
+	void GetRectsFromImage(vector<ImageRecognition::SlidingRect> &rects, const Mat &image, const TModel &model, RecognitionStatistics &stat)
 	{
 		using namespace ImageRecognition;
 		vector< unsigned int > sizes(sizeof(sizes_) / sizeof(unsigned int));
 		copy(sizes_, sizes_ + sizeof(sizes_) / sizeof(unsigned int), sizes.begin());
 
-		ImageRecognition::preprocessing prep;
+		ImageRecognition::preprocessing prep(stat);
 		Mat prepImage;
 
 		clock_t begin_time = clock();
 		prep.do_prep(image, prepImage);
 		clock_t end_time = clock();
-		cout << "Preprocessing Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
+		if (stat.flOutputTime)
+			cout << "Preprocessing Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
 
-		ImageRecognition::SlidingWindowFragmentation fragmentation(image, prepImage, STANDART_WINDOW_SIZE, STANDART_WINDOW_STEP, sizes);
-		HOGFeatureClassifier::HoGResponseFunctor response;
+		ImageRecognition::SlidingWindowFragmentation fragmentation(image, prepImage, model.GetContext(), stat);
+		HOGFeatureClassifier::HoGResponseFunctor response(stat);
 		response.InitModel(&model);
 		fragmentation.FindMaximaWindows(rects, response);
 	}
 
-	void ReadRightRects(vector<ImageRecognition::SlidingRect> &rightRects, const string &xml_filename)
+	void ReadRightRects(vector<ImageRecognition::SlidingRect> &rightRects, const string &xml_filename, RecognitionStatistics &stat)
 	{
 		using namespace Utils;
 
@@ -77,10 +78,10 @@ namespace ImageRecognition
 		}
 	}
 
-	void GetCheckingRects(vector<ImageRecognition::SlidingRect> &rects, vector<ImageRecognition::SlidingRect> &rightRects, const Mat &image, const string& xml_filename, const TModel &model)
+	void GetCheckingRects(vector<ImageRecognition::SlidingRect> &rects, vector<ImageRecognition::SlidingRect> &rightRects, const Mat &image, const string& xml_filename, const TModel &model, RecognitionStatistics &stat)
 	{
-		ReadRightRects(rightRects, xml_filename);
-		GetRectsFromImage(rects, image, model);
+		ReadRightRects(rightRects, xml_filename, stat);
+		GetRectsFromImage(rects, image, model, stat);
 		using Utils::sqr;
 
 		for (int i = 0; i < rects.size(); ++i)
@@ -108,7 +109,7 @@ namespace ImageRecognition
 		}
 	}
 
-	float FindOptimalThresholdForModel(const vector<ImageRecognition::SlidingRect> &rects, int &balanced_mis_count, int &false_positive_count)
+	float FindOptimalThresholdForModel(const vector<ImageRecognition::SlidingRect> &rects, int &balanced_mis_count, int &false_positive_count, RecognitionStatistics &stat)
 	{
 		float max_value = 0.0f;
 		for (auto it = rects.begin(); it != rects.end(); ++it)
@@ -154,7 +155,7 @@ namespace ImageRecognition
 		return min_threshold;
 	}
 
-	float FindOptimalThresholdForModel(const string &images_list, const TModel &model)
+	float FindOptimalThresholdForModel(const string &images_list, const TModel &model, RecognitionStatistics &stat)
 	{
 		vector<ImageRecognition::SlidingRect> rects;
 		vector< vector<ImageRecognition::SlidingRect> > check_rects;
@@ -199,7 +200,7 @@ namespace ImageRecognition
 
 			vector<ImageRecognition::SlidingRect> rightRectsForImage;
 			vector<ImageRecognition::SlidingRect> rectsForImage;
-			GetCheckingRects(rectsForImage, rightRectsForImage, image, xml_filename, model);
+			GetCheckingRects(rectsForImage, rightRectsForImage, image, xml_filename, model, stat);
 			for (auto it = rectsForImage.begin(); it != rectsForImage.end(); ++it)
 				rects.push_back(*it);
 
@@ -208,17 +209,18 @@ namespace ImageRecognition
 			if (it->falseDetection == false)
 				++mis_count;
 
-#if DUMP_IMAGES == 1
-			check_rects.push_back(rectsForImage);
-			check_right_rects.push_back(rightRectsForImage);
-			check_output_images.push_back(filename);
-#endif
+			if (stat.flDumpDebugImages)
+			{
+				check_rects.push_back(rectsForImage);
+				check_right_rects.push_back(rightRectsForImage);
+				check_output_images.push_back(filename);
+			}
 		}
 		int balanced_mis_count = 0;
 		int false_positive_count = 0;
 
-		float threshold = FindOptimalThresholdForModel(rects, balanced_mis_count, false_positive_count);
-#if OUTPUT_TO_CONSOLE  == 1
+		float threshold = FindOptimalThresholdForModel(rects, balanced_mis_count, false_positive_count, stat);
+		if (stat.flOutputInfo)
 		{
 			float missings_optimize = float(balanced_mis_count) / right_rects_count * 100.0f;
 			float missings = float(balanced_mis_count + mis_count) / right_rects_count * 100.0f;
@@ -228,9 +230,8 @@ namespace ImageRecognition
 			cout << "False Positives: " << false_positives << endl;
 			cout << "Threshold: " << threshold << endl;
 		}
-#endif
 
-#if DUMP_IMAGES == 1
+		if (stat.flDumpDebugImages)
 		{
 			using Utils::int2str;
 			for (int i = 0; i < check_output_images.size(); ++i)
@@ -274,7 +275,7 @@ namespace ImageRecognition
 				imwrite("dump/rects_positive" + int2str(i + 1) + ".png", output_image_positive);
 			}
 		}
-#endif
+
 		return threshold;
 	}
 }

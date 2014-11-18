@@ -95,7 +95,7 @@ Mat countSobel(const Mat &in)
 }
 
 // Counting module and direction of gradients (3.3)
-Mat countModAndDirOfGrad(const Mat &in)
+Mat countModAndDirOfGrad(const Mat &in, const HOGContext& context, RecognitionStatistics &stat)
 {
 	Mat sobel = countSobel(in);
 	Mat module_direction(sobel.rows, sobel.cols, CV_32FC2);
@@ -137,7 +137,7 @@ float FastPredict(const Mat &modDir)
 }
 
 //static float MAX_DEBUG_VALUE = 0.0f; //DEBUG
-void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &modDir, vector<float> &feats )
+void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &modDir, vector<float> &feats, const HOGContext &context)
 {
 	vector<float> buffer;
 	buffer.reserve(blockSizeX * blockSizeY * dirSegSize + blockSizeX * blockSizeY + 1);
@@ -221,8 +221,8 @@ void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const
 	#endif
 	#if 1
 	for (size_t i = 0; i < buffer.size(); i++) {
-		for (int j = -nonlinear_n; j <= nonlinear_n; j++) {
-			auto x = phi(buffer[i], j * nonlinear_L);
+		for (int j = -context.nonlinear_n; j <= context.nonlinear_n; j++) {
+			auto x = phi(buffer[i], j * context.nonlinear_L);
 			feats.push_back(x.first);
 			feats.push_back(x.second);
 		}
@@ -235,34 +235,35 @@ void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const
 	#endif
 }
 
-void ExtractFeaturesForSample(const Mat& modDir, vector<float> &feats )
+void ExtractFeaturesForSample(const Mat& modDir, vector<float> &feats, const HOGContext& context, RecognitionStatistics &stat)
 {
 	feats.clear();
 
-	const int treeDepth = blockSizeCount;
-
+	const int treeDepth = context.blockSizesX.size();
 	for (int i = 0; i < treeDepth; i++)
 	{
-		HOG(blockSizeX[i], blockSizeY[i], dirSegSize, modDir, feats);
+		HOG(context.blockSizesX[i], context.blockSizesX[i], context.dirSegSize, modDir, feats, context);
 	}
 }
 
-void FastPredictForSamples(const TFileList& file_list, vector< float > &fastFeatures )
+void FastPredictForSamples(const TFileList& file_list, vector< float > &fastFeatures, const HOGContext& context, RecognitionStatistics &stat)
 {
 	clock_t begin_time = clock();
-	std::cout << "Extract Fast Features";
+	if (stat.flOutputInfo)
+		*stat.pInfoStream << "Extract Fast Features";
 
 	fastFeatures.reserve( file_list.size() );
-	Mat resizedImage = Mat(RESIZE_IMAGE_SIZE, RESIZE_IMAGE_SIZE, CV_8UC1);
+	Mat resizedImage = Mat(context.resizeImageSize, context.resizeImageSize, CV_8UC1);
 
 	for (size_t image_idx = 0; image_idx < file_list.size(); ++image_idx)
 	{
 		if ((image_idx + 1) % 500 == 0)
-			cout << ".";
+		if (stat.flOutputInfo)
+			*stat.pInfoStream << ".";
 		Mat image;
 		image = imread(file_list[image_idx].first.c_str(), 0);
 		resize(image, resizedImage, resizedImage.size());
-		Mat modDir = countModAndDirOfGrad(resizedImage);
+		Mat modDir = countModAndDirOfGrad(resizedImage, context, stat);
 
 		fastFeatures.push_back( FastPredict(modDir) );
 		#if 0
@@ -276,11 +277,13 @@ void FastPredictForSamples(const TFileList& file_list, vector< float > &fastFeat
 	//std::cout << "MAX_DEBUG_VALUE: " << MAX_DEBUG_VALUE << endl;//DEBUG
 	clock_t end_time = clock();
 
-	std::cout << "done. ";
-	cout << "Fast Feature Extraction Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
+	if (stat.flOutputInfo)
+		*stat.pInfoStream << "done. ";
+	if (stat.flOutputTime)
+		*stat.pInfoStream << "Fast Feature Extraction Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
 }
 
-float FindOptimalFastPredictValues(const TFileList& file_list, const vector< float > &fastFeatures)
+float FindOptimalFastPredictValues(const TFileList& file_list, const vector< float > &fastFeatures, const HOGContext& context, RecognitionStatistics &stat)
 {
 	float minValue = 1000.0f;
 	float maxValue = 0.0f;
@@ -316,46 +319,53 @@ float FindOptimalFastPredictValues(const TFileList& file_list, const vector< flo
 		}
 	}
 	float _error2 = float(error2) / file_list.size() * 100.0f;
-	cout << "MinMax: (" << minValue << ", " << maxValue << ")" << endl;
-	cout << "Fast Predict Error: " << _error2 << endl;
+	if (stat.flOutputInfo)
+	{
+		*stat.pInfoStream << "MinMax: (" << minValue << ", " << maxValue << ")" << endl;
+		*stat.pInfoStream << "Fast Predict Error: " << _error2 << endl;
+	}
 
 	return minValue;
 }
 
 // Exatract features from dataset.
-void ExtractFeatures(const TFileList& file_list, TFeatures* features)
+void ExtractFeatures(const TFileList& file_list, TFeatures* features, const HOGContext& context, RecognitionStatistics &stat)
 {
 	clock_t begin_time = clock();
-	std::cout << "Extract Features";
+	if (stat.flOutputInfo)
+		*stat.pInfoStream << "Extract Features";
 
-	Mat resizedImage = Mat(RESIZE_IMAGE_SIZE, RESIZE_IMAGE_SIZE, CV_8UC1);
+	Mat resizedImage = Mat(context.resizeImageSize, context.resizeImageSize, CV_8UC1);
 	
 	for (size_t image_idx = 0; image_idx < file_list.size(); ++image_idx) 
 	{
 		if ((image_idx + 1) % 500 == 0)
-			cout << ".";
+		if (stat.flOutputInfo)
+			*stat.pInfoStream << ".";
 
 		Mat image;
 		image = imread(file_list[image_idx].first.c_str(), 0);
 		#if 1
 			resize(image, resizedImage, resizedImage.size());
-			Mat modDir = countModAndDirOfGrad(resizedImage);
+			Mat modDir = countModAndDirOfGrad(resizedImage, context, stat);
 		#else 
-			Mat modDir = countModAndDirOfGrad(image);
+			Mat modDir = countModAndDirOfGrad(image, context);
 		#endif
 		features->push_back(make_pair(vector<float>(), file_list[image_idx].second));
 		//features->back().first.reserve(10000);
-		ExtractFeaturesForSample(modDir, features->back().first);
+		ExtractFeaturesForSample(modDir, features->back().first, context, stat);
 	}
-	std::cout << "done. ";
+	if (stat.flOutputInfo)
+		*stat.pInfoStream << "done. ";
 	//std::cout << "MAX_DEBUG_VALUE: " << MAX_DEBUG_VALUE << endl;//DEBUG
 	clock_t end_time = clock();
-	cout << "Extraction Time: " << (float(end_time - begin_time)/1000.0f) << endl;
+	if (stat.flOutputTime)
+		*stat.pInfoStream << "Extraction Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
 }
 
 // Train SVM classifier using data from 'data_file' and save trained model
 // to 'model_file'
-TModel TrainClassifier(const string& data_file, const string &images_list, const string& model_file) {
+TModel TrainClassifier(const string& data_file, const string &images_list, const string& model_file, const HOGContext& context, RecognitionStatistics &stat) {
 	// List of image file names and its labels
 	TFileList file_list;
 	// Structure of features of images and its labels
@@ -364,29 +374,30 @@ TModel TrainClassifier(const string& data_file, const string &images_list, const
 	TModel model;
 	// Parameters of classifier
 	TClassifierParams params;
-
+	
 	// Load list of image file names and its labels
 	LoadFileList(data_file, &file_list);
 	// Extract features from images
 
 	vector<float> fastFeatures;
-	FastPredictForSamples(file_list, fastFeatures);
-	model.setFastPredictValue( FindOptimalFastPredictValues(file_list, fastFeatures) );
-	ExtractFeatures(file_list, &features);
+	FastPredictForSamples(file_list, fastFeatures, context, stat);
+	model.setFastPredictValue(FindOptimalFastPredictValues(file_list, fastFeatures, context, stat));
+	ExtractFeatures(file_list, &features, context, stat);
 
 	// PLACE YOUR CODE HERE
 	// You can change parameters of classifier here
-	params.C = param_C;
+	params.C = context.param_C;
 	
-	TClassifier classifier(params);
+	TClassifier classifier(params, stat);
 	// Train classifier
 	classifier.Train(features, &model);
 	// Save model to file
+	model.SetContext(context);
 	model.Save(model_file);
 
 	if (images_list != "")
 	{
-		float model_threshold = FindOptimalThresholdForModel( images_list, model );
+		float model_threshold = FindOptimalThresholdForModel( images_list, model, stat );
 		model.setModelThreshold(model_threshold);
 		model.Save(model_file);
 	}
@@ -395,7 +406,8 @@ TModel TrainClassifier(const string& data_file, const string &images_list, const
 
 void PredictData(const string& data_file,
 	const string& model_file,
-	const string& prediction_file) {
+	const string& prediction_file,
+	RecognitionStatistics &stat) {
 
 	TFileList file_list;
 	TFeatures features;
@@ -406,10 +418,10 @@ void PredictData(const string& data_file,
 
 	LoadFileList(data_file, &file_list);
 
-	ExtractFeatures(file_list, &features);
+	ExtractFeatures(file_list, &features, model.GetContext(), stat);
 
-	TClassifier classifier = TClassifier(TClassifierParams());
-	classifier.Predict(features, model, &labels, file_list);
+	TClassifier classifier = TClassifier(TClassifierParams(), stat);
+	classifier.Predict(features, model, &labels, file_list, stat);
 
 	SavePredictions(file_list, labels, prediction_file);
 }

@@ -48,10 +48,10 @@ namespace HOGFeatureClassifier
 	class TClassifier {
 		// Parameters of classifier
 		TClassifierParams params_;
-
+		RecognitionStatistics &stat;
 	public:
 		// Basic constructor
-		TClassifier(const TClassifierParams& params) : params_(params) {}
+		TClassifier(const TClassifierParams& params, RecognitionStatistics &_stat) : params_(params), stat(_stat) {}
 
 		// Train classifier
 		void Train(const TFeatures& features, TModel* model) {
@@ -62,8 +62,11 @@ namespace HOGFeatureClassifier
 			size_t number_of_features = features[0].first.size();
 			assert(number_of_features > 0);
 
-			std::cout << "number of samples: " << number_of_samples << std::endl;
-			std::cout << "number of features: " << number_of_features << std::endl;
+			if (stat.flOutputInfo)
+			{
+				std::cout << "number of samples: " << number_of_samples << std::endl;
+				std::cout << "number of features: " << number_of_features << std::endl;
+			}
 
 			vector<struct feature_node> data(number_of_samples*(number_of_features + 1));
 			//std::cout << "Setting up prob" << std::endl;
@@ -113,7 +116,7 @@ namespace HOGFeatureClassifier
 			delete[] prob.x;
 		}
 
-		static void ConvertFeaturesToClassifierType(const vector<float>& features, vector< struct feature_node > &classifier_features)
+		static void ConvertFeaturesToClassifierType(const vector<float>& features, vector< struct feature_node > &classifier_features, RecognitionStatistics &stat)
 		{
 			classifier_features.clear();
 			for (int i = 0; i < features.size(); ++i)
@@ -126,14 +129,14 @@ namespace HOGFeatureClassifier
 			classifier_features.back().index = -1;
 		}
 
-		static double ComputePredictValue(const vector< struct feature_node > &classifier_features, const TModel& model)
+		static double ComputePredictValue(const vector< struct feature_node > &classifier_features, const TModel& model, RecognitionStatistics &stat)
 		{
 			double arr[1];
 			predict_values(model.get(), &(classifier_features[0]), arr);
 			return arr[0];
 		}
 
-		static void ROC_Curve(const vector<float> &values, const vector<pair<string, int> > &file_list)
+		static void ROC_Curve(const vector<float> &values, const vector<pair<string, int> > &file_list, RecognitionStatistics &stat)
 		{
 			float max_value = 0.0f;
 			float min_value = 0.0f;
@@ -145,7 +148,7 @@ namespace HOGFeatureClassifier
 				sum_value += double( values[i] );
 			}
 			sum_value /= values.size();
-			if (1)
+			if (stat.flOutputInfo)
 			{
 				cout << "min: " << min_value << endl;
 				cout << "max: " << max_value << endl;
@@ -184,7 +187,7 @@ namespace HOGFeatureClassifier
 		}
 		
 		// Predict data
-		static void Predict(const TFeatures& features, const TModel& model, TLabels* labels, const vector<pair<string, int> > &file_list)
+		static void Predict(const TFeatures& features, const TModel& model, TLabels* labels, const vector<pair<string, int> > &file_list, RecognitionStatistics &stat)
 		{
 			// Number of samples and features must be nonzero
 			size_t number_of_samples = features.size();
@@ -201,14 +204,14 @@ namespace HOGFeatureClassifier
 			std::ofstream outfile("dump.txt");
 			for (size_t sample_idx = 0; sample_idx < features.size(); ++sample_idx) 
 			{
-				ConvertFeaturesToClassifierType(features[sample_idx].first, x);
+				ConvertFeaturesToClassifierType(features[sample_idx].first, x, stat);
 				//labels->push_back( int( predict( model.get(), &(x[0]) ) ) );
-				values.push_back(ComputePredictValue(x, model));
+				values.push_back(ComputePredictValue(x, model, stat));
 				labels->push_back(int(values.back() > 0));
-				outfile << labels->back() << " " << ComputePredictValue(x, model) << std::endl;
+				outfile << labels->back() << " " << ComputePredictValue(x, model, stat) << std::endl;
 			}
 
-			ROC_Curve(values, file_list);
+			ROC_Curve(values, file_list, stat);
 		}
 	};
 }//HOGFeatureClassifier
