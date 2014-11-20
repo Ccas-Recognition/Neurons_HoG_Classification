@@ -87,6 +87,10 @@ namespace HOGFeatureClassifier
 				input >> standartSlidingWindowSize;
 			else if (variable == "standartslidingWindowStep")
 				input >> standartslidingWindowStep;
+			else if (variable == "blocksNormalizationType")
+				input >> blocksNormalizationType;
+			else if (variable == "solver_type")
+				input >> solver_type;
 		}
 	}
 	void HOGContext::Save(ostream &output) const
@@ -109,6 +113,8 @@ namespace HOGFeatureClassifier
 		output << endl << "param_C " << param_C;
 		output << endl << "standartSlidingWindowSize " << standartSlidingWindowSize;
 		output << endl << "standartslidingWindowStep " << standartslidingWindowStep;
+		output << endl << "blocksNormalizationType " << blocksNormalizationType;
+		output << endl << "solver_type " << solver_type;
 	}
 
 	TModel::TModel() : model_(NULL) { init(); }
@@ -124,7 +130,6 @@ namespace HOGFeatureClassifier
 
 	TModel& TModel::operator=(struct model* model) 
 	{
-		init();
 		model_ = auto_ptr<struct model>(model);
 		return *this;
 	}

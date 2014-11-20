@@ -50,6 +50,8 @@ namespace HOGFeatureClassifier
 		vector<int> slidingWindowSizes;
 		int standartSlidingWindowSize;
 		int standartslidingWindowStep;
+		int blocksNormalizationType;
+		int solver_type;
 
 		HOGContext()
 		{
@@ -71,10 +73,17 @@ namespace HOGFeatureClassifier
 			copy( _slidingWindowSizes, _slidingWindowSizes + 4, slidingWindowSizes.begin() );
 			standartSlidingWindowSize = 24;
 			standartslidingWindowStep = 4;
-
+			blocksNormalizationType = 1;
+			solver_type = 2;
 		}
 		void Load(istream &input);
 		void Save(ostream &output)const;
+	};
+
+	struct ROCValue
+	{
+		float precision1, precision2;
+		float value;
 	};
 
 	struct RecognitionStatistics
@@ -83,6 +92,14 @@ namespace HOGFeatureClassifier
 		bool flOutputInfo;
 		bool flOutputTime;
 		bool flDumpDebugImages;
+
+		vector<ROCValue> fastPredictROC;
+		float fastPredictMinValue;
+		float fastPredictMaxValue;
+
+		vector<ROCValue> predictROC;
+		float predictMinValue;
+		float predictMaxValue;
 
 		ostream* pInfoStream;
 
@@ -94,6 +111,11 @@ namespace HOGFeatureClassifier
 			flDumpDebugImages = false;
 
 			pInfoStream = &cout;
+
+			fastPredictMinValue = 0.0f;
+			fastPredictMaxValue = 0.0f;
+			predictMinValue = 0.0f;
+			predictMaxValue = 0.0f;
 		}
 
 		void SetDumpDebugImages(bool on)
@@ -102,7 +124,7 @@ namespace HOGFeatureClassifier
 			if (on)
 			{
 				#ifdef WIN32
-					system("mkdir dump");
+					system("If Not Exist dump\ mkdir dump");
 					system("del /Q dump");
 				#else
 					system("rm -r dump");

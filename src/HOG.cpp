@@ -169,31 +169,33 @@ void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const
 					buffer[i * dirSegSize + j] /= buffer_counts[i];
 			}
 		#endif
-		#if 0
-				int numOfBlocks = 1;
-				for (int i = 0; i < blockSizeX * blockSizeY; i += numOfBlocks) {
-					float norm(0);
-					for (int j = 0; j < dirSegSize * numOfBlocks; j++)
-						norm += pow(buffer[i * dirSegSize + j], 2);
-
-					norm = sqrt(norm);
-					for (int j = 0; j < dirSegSize * numOfBlocks; j++)
-					if (norm > 0)
-						buffer[i * dirSegSize + j] /= norm;
-				}
-		#else
-				float norm = 0;
-				for (int j = 0; j < buffer.size(); j++)
-					norm += buffer[j] * buffer[j];
+		if (context.blocksNormalizationType == 1)
+		{
+			int numOfBlocks = 1;
+			for (int i = 0; i < blockSizeX * blockSizeY; i += numOfBlocks) {
+				float norm(0);
+				for (int j = 0; j < dirSegSize * numOfBlocks; j++)
+					norm += pow(buffer[i * dirSegSize + j], 2);
 
 				norm = sqrt(norm);
+				for (int j = 0; j < dirSegSize * numOfBlocks; j++)
 				if (norm > 0)
-				{
-					for (int j = 0; j < buffer.size(); j++)
-						buffer[j] /= norm;
-				}
+					buffer[i * dirSegSize + j] /= norm;
+			}
+		}
+		else
+		{
+			float norm = 0;
+			for (int j = 0; j < buffer.size(); j++)
+				norm += buffer[j] * buffer[j];
 
-		#endif
+			norm = sqrt(norm);
+			if (norm > 0)
+			{
+				for (int j = 0; j < buffer.size(); j++)
+					buffer[j] /= norm;
+			}
+		}
 	#endif
 
 	#if 0
@@ -300,32 +302,47 @@ float FindOptimalFastPredictValues(const TFileList& file_list, const vector< flo
 		else
 			maxValue = max(maxValue, fastFeatures[image_idx]);
 	}
-	int error2 = 0;
-	for (size_t i = 0; i < file_list.size(); ++i)
+
+	const int MAX_K = 100;
+	stat.fastPredictROC.resize(MAX_K);
+	stat.fastPredictMinValue = minValue;
+	stat.fastPredictMaxValue = maxValue;
+	float optimalValue = minValue;
+	float optimalError1 = 0.0f;
+	float optimalError2 = 0.0f;
+
+	for (int k = 0; k < MAX_K; ++k)
 	{
-		if (file_list[i].second == 0)
+		float current_thr = minValue + float(maxValue - minValue)*float(k) / MAX_K;
+		stat.fastPredictROC[k].value = current_thr;
+		int error1 = 0;
+		int error2 = 0;
+
+		for (size_t i = 0; i < file_list.size(); ++i)
 		{
-			if (fastFeatures[i] > minValue)
-			{
+			if ((file_list[i].second == 0) && (fastFeatures[i] > current_thr))
 				++error2;
-			}
-			else
-			{
-				#if 0
-					imshow("Image", imread(file_list[i].first.c_str()));
-					waitKey(0);
-				#endif
-			}
+			else if ((file_list[i].second == 1) && (fastFeatures[i] < current_thr))
+				++error1;
+		}
+		float _error1 = float(error1) / file_list.size();
+		float _error2 = float(error2) / file_list.size();
+		stat.fastPredictROC[k].precision1 = 1.0f - _error1;
+		stat.fastPredictROC[k].precision2 = 1.0f - _error2;
+		if (_error1 < 0.05f)
+		{
+			optimalValue = current_thr;
+			optimalError1 = _error1;
+			optimalError2 = _error2;
 		}
 	}
-	float _error2 = float(error2) / file_list.size() * 100.0f;
+	
 	if (stat.flOutputInfo)
 	{
-		*stat.pInfoStream << "MinMax: (" << minValue << ", " << maxValue << ")" << endl;
-		*stat.pInfoStream << "Fast Predict Error: " << _error2 << endl;
+		*stat.pInfoStream << "Optimal Fast Predict Value: " << optimalValue << " [" << minValue << ", " << maxValue << "]" << endl;
+		*stat.pInfoStream << "Fast Predict Error: (" << optimalError1 << ", " << optimalError2 << ")" << endl;
 	}
-
-	return minValue;
+	return optimalValue;
 }
 
 // Exatract features from dataset.
@@ -387,6 +404,7 @@ TModel TrainClassifier(const string& data_file, const string &images_list, const
 	// PLACE YOUR CODE HERE
 	// You can change parameters of classifier here
 	params.C = context.param_C;
+	params.solver_type = context.solver_type;
 	
 	TClassifier classifier(params, stat);
 	// Train classifier
@@ -420,10 +438,22 @@ void PredictData(const string& data_file,
 
 	ExtractFeatures(file_list, &features, model.GetContext(), stat);
 
+	vector<float> fastFeatures;
+	FastPredictForSamples(file_list, fastFeatures, model.GetContext(), stat);
+
 	TClassifier classifier = TClassifier(TClassifierParams(), stat);
-	classifier.Predict(features, model, &labels, file_list, stat);
+	classifier.Predict(features, fastFeatures, model, &labels, file_list, stat);
 
 	SavePredictions(file_list, labels, prediction_file);
+
+	int max_i = 0;
+	for (int i = stat.predictROC.size() - 1; i >= 0; --i)
+	{
+		if ((1.0f - stat.predictROC[i].precision2) < 0.000001f)
+			max_i = i;
+	}
+	model.setModelThreshold( stat.predictROC[max_i].value );
+	model.Save(model_file);
 }
 
 }

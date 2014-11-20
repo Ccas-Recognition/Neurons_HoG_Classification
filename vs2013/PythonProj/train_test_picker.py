@@ -9,41 +9,34 @@ ftrain = open("../../data/neuron/train.txt", "w")
 total_train = 1
 
 if total_train:
-    sampling_count = 4915
     training_count = 4000
-    #training_count = 4615
+    training_bg_count = 10000
 else:
-    sampling_count = 2000
-    training_count = 1000
+    training_bg_count = 4000
+    training_count = 1500
 
 training_data_dir_txt = 'total_data/'
 training_data_dir = '../../data/neuron/training_data/'
 total_data_dir = '../../data/neuron/total_data/'
 
-def bmpToJpg(subfolder, label):
+def bmpToJpg(subfolder, sampling_count, label):
     mypath = total_data_dir + subfolder
     onlyfiles = np.array([ f for f in listdir(mypath) if isfile(join(mypath,f)) and splitext(f)[1] == ".jpg"  ])
 
-    indx = np.random.choice(onlyfiles.size, min( sampling_count, len( onlyfiles) ), replace = False)
+    indx1 = np.random.choice(onlyfiles.size, min( sampling_count, len( onlyfiles) ), replace = False)
+    indx2 = np.random.choice(onlyfiles.size, min( sampling_count, len( onlyfiles) ), replace = False)
 
-    for file in onlyfiles[indx[:training_count]]:
+    for file in onlyfiles[indx1]:
         fileName, fileExtension = splitext(file)
         ftrain.write(training_data_dir_txt + subfolder + file + ' ' + str(label) + '\n')
         #print([label, fileName])
 
-    arr_tmp = []
-    if total_train:
-        arr_tmp = onlyfiles
-    else:
-        arr_tmp = onlyfiles[indx[training_count:]]
-
-    for file in arr_tmp:
-    #for file in onlyfiles:
+    for file in onlyfiles[indx2]:
         fileName, fileExtension = splitext(file)
         ftest.write(training_data_dir_txt + subfolder + file + ' ' + str(label) + '\n')
         #print([label, fileName])
 
-bmpToJpg( 'fg/', 1)
-bmpToJpg( 'bg/', 0)
+bmpToJpg( 'fg/', training_count, 1)
+bmpToJpg( 'bg/', training_bg_count, 0)
 
-print('Sampling generated: %d training, %d testing'%((training_count*2), ((sampling_count - training_count)*2)))
+print('Sampling generated. fg: %d, bg: %d'%(training_count,training_bg_count))

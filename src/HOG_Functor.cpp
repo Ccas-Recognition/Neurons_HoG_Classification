@@ -39,27 +39,28 @@ namespace HOGFeatureClassifier
 		return intMod;
 	}
 	*/
+	template<typename TPixel>
 	Mat ComputeintegralImage(const Mat &input_image)
 	{
 		Mat intMod(input_image.rows, input_image.cols, CV_64FC1);
 
-		intMod.at<double>(0, 0) = double(input_image.at<uchar>(0, 0));
+		intMod.at<double>(0, 0) = double(input_image.at<TPixel>(0, 0));
 
 		for (int y = 1; y < input_image.rows; ++y)
 		{
 			int x = 0;
-			intMod.at<double>(y, x) = intMod.at<double>(y - 1, x) + double(input_image.at<uchar>(y, x));
+			intMod.at<double>(y, x) = intMod.at<double>(y - 1, x) + double(input_image.at<TPixel>(y, x));
 		}
 		for (int x = 1; x < input_image.cols; ++x)
 		{
 			int y = 0;
-			intMod.at<double>(y, x) = intMod.at<double>(y, x - 1) + double(input_image.at<uchar>(y, x));
+			intMod.at<double>(y, x) = intMod.at<double>(y, x - 1) + double(input_image.at<TPixel>(y, x));
 		}
 		for (int y = 1; y < input_image.rows; ++y)
 		{
 			for (int x = 1; x < input_image.cols; ++x)
 			{
-				intMod.at<double>(y, x) = double(input_image.at<uchar>(y, x))
+				intMod.at<double>(y, x) = double(input_image.at<TPixel>(y, x))
 					+ intMod.at<double>(y - 1, x)
 					+ intMod.at<double>(y, x - 1)
 					- intMod.at<double>(y - 1, x - 1);
@@ -98,11 +99,17 @@ namespace HOGFeatureClassifier
 		image = _image;
 		additionalImage = _additionalImage;
 		modDir = countModAndDirOfGrad(image, model->GetContext(), stat);
-		integralImage = ComputeintegralImage(additionalImage);
+		integralImage = ComputeintegralImage<uchar>(additionalImage);
+		Mat modImage(modDir.rows, modDir.cols, CV_32FC1);
+		for (int y = 0; y < modDir.rows; ++y)
+		for (int x = 0; x < modDir.cols; ++x)
+			modImage.at<float>(y, x) = modDir.at<Vec2f>(y, x).val[0];
+			
+		fastPredictIntegralImage = ComputeintegralImage<float>(modDir);
 		return true;
 	}
 
-	float HoGResponseFunctor::ComputeFastPredict(int x, int y, int w, int h)
+	static float ComputeFastPredict(Mat integralImage, int x, int y, int w, int h)
 	{
 		double sum = (
 			integralImage.at<double>(y + h - 2, x + w - 2)
@@ -115,12 +122,17 @@ namespace HOGFeatureClassifier
 
 	float HoGResponseFunctor::operator()(int pos_x, int pos_y, int width, int height)
 	{
-		float fastPredict = ComputeFastPredict(pos_x, pos_y, width, height);
-		if (fastPredict < 0.05 || fastPredict > 0.8)
+		float prePredict = ComputeFastPredict(integralImage, pos_x, pos_y, width, height);
+		if (prePredict  < 0.05 || prePredict > 0.8)
 		{
 			#if 0
 				++DEBUG_COUNT_OPERATOR;
 			#endif
+			return 0.0f;
+		}
+		float fastPredict = ComputeFastPredict(fastPredictIntegralImage, pos_x, pos_y, width, height);
+		if (fastPredict < model->getFastPredictValue()*0.3f)
+		{
 			return 0.0f;
 		}
 

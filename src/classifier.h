@@ -136,7 +136,7 @@ namespace HOGFeatureClassifier
 			return arr[0];
 		}
 
-		static void ROC_Curve(const vector<float> &values, const vector<pair<string, int> > &file_list, RecognitionStatistics &stat)
+		static void ROC_Curve(const vector<float> &values, const vector<float> &fast_values, const TModel& model, const vector<pair<string, int> > &file_list, RecognitionStatistics &stat)
 		{
 			float max_value = 0.0f;
 			float min_value = 0.0f;
@@ -147,6 +147,9 @@ namespace HOGFeatureClassifier
 				min_value = min(min_value, values[i]);
 				sum_value += double( values[i] );
 			}
+			stat.predictMaxValue = max_value;
+			stat.predictMinValue = min_value;
+
 			sum_value /= values.size();
 			if (stat.flOutputInfo)
 			{
@@ -155,16 +158,18 @@ namespace HOGFeatureClassifier
 				//cout << "avg: " << sum_value << endl;
 			}
 			int iters = 100;
+			stat.predictROC.resize(iters);
 			for (int k = 0; k < iters; ++k)
 			{
-				if ((k > 1) && (k < (iters / 5)) )
-					continue;
 				float t = max_value*float(k) / (iters);
 				int error1 = 0; //1 - right, 0 - predicted
 				int error2 = 0; //0 - right, 1 - predicted
 				for (int i = 0; i < values.size(); ++i)
 				{
 					int predict_value = int(values[i] > t);
+					if (fast_values[i] < model.getFastPredictValue())
+						predict_value = 0;
+
 					if (file_list[i].second != predict_value)
 					{
 						if (file_list[i].second == 1)
@@ -173,12 +178,16 @@ namespace HOGFeatureClassifier
 							++error2;
 					}
 				}
-				float precision = 100 * float(values.size() - error1 - error2) / values.size();
-				float precision_error1 = 100 * (float(error1) / values.size());
-				float precision_error2 = 100 * (float(error2) / values.size());
-				printf("%10f (%10f, %10f): %10f\n", precision, precision_error1, precision_error2, t);
-				if (precision_error2 < 0.00001f)
-					break;
+				float precision = float(values.size() - error1 - error2) / values.size();
+				float precision_error1 = (float(error1) / values.size());
+				float precision_error2 = (float(error2) / values.size());
+				
+				stat.predictROC[k].value = t;
+				stat.predictROC[k].precision1 = 1.0f - precision_error1;
+				stat.predictROC[k].precision2 = 1.0f - precision_error2;
+				//printf("%10f (%10f, %10f): %10f\n", precision, precision_error1, precision_error2, t);
+				//if (precision_error2 < 0.00001f)
+				//	break;
 				//cout << setprecision(4) << precision << " (" << precision_error1 << ", " << precision_error2 << ")" << ": " << t << endl;
 				//cout << "Precision: " << (precision*100.0f) << "%" << endl;
 				//cout << "Error 1 (1 - right, 0 - predicted): " <<  << "%" << endl;
@@ -187,7 +196,7 @@ namespace HOGFeatureClassifier
 		}
 		
 		// Predict data
-		static void Predict(const TFeatures& features, const TModel& model, TLabels* labels, const vector<pair<string, int> > &file_list, RecognitionStatistics &stat)
+		static void Predict(const TFeatures& features, const vector<float> &fastFeatures, const TModel& model, TLabels* labels, const vector<pair<string, int> > &file_list, RecognitionStatistics &stat)
 		{
 			// Number of samples and features must be nonzero
 			size_t number_of_samples = features.size();
@@ -201,17 +210,17 @@ namespace HOGFeatureClassifier
 			values.reserve(features.size());
 			x.reserve(number_of_features + 1);
 
-			std::ofstream outfile("dump.txt");
+			//std::ofstream outfile("dump.txt");
 			for (size_t sample_idx = 0; sample_idx < features.size(); ++sample_idx) 
 			{
 				ConvertFeaturesToClassifierType(features[sample_idx].first, x, stat);
 				//labels->push_back( int( predict( model.get(), &(x[0]) ) ) );
 				values.push_back(ComputePredictValue(x, model, stat));
 				labels->push_back(int(values.back() > 0));
-				outfile << labels->back() << " " << ComputePredictValue(x, model, stat) << std::endl;
+				//outfile << labels->back() << " " << ComputePredictValue(x, model, stat) << std::endl;
 			}
 
-			ROC_Curve(values, file_list, stat);
+			ROC_Curve(values, fastFeatures, model, file_list, stat);
 		}
 	};
 }//HOGFeatureClassifier

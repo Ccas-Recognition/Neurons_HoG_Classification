@@ -53,6 +53,8 @@ Mat countModAndDirOfGrad(const Mat &in, const HOGContext& context, RecognitionSt
 
 void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const Mat &modDir, vector<float> &feats, const HOGContext& context, RecognitionStatistics &stat);
 
+void FastPredictForSamples(const TFileList& file_list, vector< float > &fastFeatures, const HOGContext& context, RecognitionStatistics &stat);
+
 float FastPredict(const Mat &modDir, const HOGContext& context, RecognitionStatistics &stat);
 
 void ExtractFeaturesForSample(const Mat& modDir, vector<float> &feats, const HOGContext& context, RecognitionStatistics &stat);

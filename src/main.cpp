@@ -2,6 +2,7 @@
 #include "argvparser.h"
 
 #include <opencv2/opencv.hpp>
+#include <iomanip>
 #include <fstream>
 
 using CommandLineProcessing::ArgvParser;
@@ -86,6 +87,20 @@ int main(int argc, char** argv) {
 				context.Load(input_context);
 		}
 		ImageRecognition::TrainHOGClassifier(data_file, images_list, model_file, context, stat);
+		ofstream output("rocs/fastPredictROC.txt");
+
+		if (output.is_open())
+		{
+			for (int i = 0; i < stat.fastPredictROC.size(); ++i)
+			{
+
+				output << setw(12) << (stat.fastPredictROC[i].value) << " "
+					<< setw(12) << ((1.0f - stat.fastPredictROC[i].precision1) * 100) << " "
+					<< setw(12) << ((1.0f - stat.fastPredictROC[i].precision2) * 100) << endl;
+					//<< setw(12) << ((stat.fastPredictROC[i].precision1)) << " "
+					//<< setw(12) << ((stat.fastPredictROC[i].precision2)) << endl;
+			}
+		}
 	}
     if (predict) 
 	{
@@ -96,6 +111,25 @@ int main(int argc, char** argv) {
         }
         string prediction_file = cmd.optionValue("predicted_labels");
 		ImageRecognition::PredictData(data_file, model_file, prediction_file, stat);
+
+		ofstream output("rocs/predictROC.txt");
+		if (output.is_open())
+		{
+
+			int max_i = 0;
+			for (int i = stat.predictROC.size() - 1; i >= 0; --i)
+			{
+				if ((1.0f - stat.predictROC[i].precision2) < 0.0007f)
+					max_i = i;
+				output << setw(12) << stat.predictROC[i].value << " " 
+					//<< setw(12) << ((stat.predictROC[i].precision1)) << " "
+					//<< setw(12) << ((stat.predictROC[i].precision2)) << endl;
+					<< setw(12) << ((1.0f - stat.predictROC[i].precision1) * 100) << " "
+					<< setw(12) << ((1.0f - stat.predictROC[i].precision2) * 100) << endl;
+			}
+			cout << setw(12) << ((1.0f - stat.predictROC[max_i].precision1) * 100) << " "
+				<< setw(12) << ((1.0f - stat.predictROC[max_i].precision2) * 100) << endl;
+		}
     }
 	
 	if (optimize_threshold)
@@ -115,7 +149,7 @@ int main(int argc, char** argv) {
 		Mat output_image = imread(image_filepath);
 		for (int i = 0; i<rects.size(); ++i)
 		{
-			rectangle(output_image, rects[i].rect, Scalar(0, 0, 255), 1);
+			rectangle(output_image, rects[i].rect, Scalar(0, 255, 0), 1);
 		}
 		int index = image_filepath.find_last_of('.');
 		if (index != -1)
