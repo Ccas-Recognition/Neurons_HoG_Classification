@@ -428,6 +428,48 @@ void ExtractLaplacianFeaturesForSample( const Mat& image, vector<float> &feats, 
 	#endif
 }
 
+void DebugFGChooser(const TFileList& file_list, const HOGContext& context, RecognitionStatistics &stat)
+{
+	system("mkdir fg2");
+	system("mkdir badfg2");
+	for (int i = 0; i < file_list.size(); ++i)
+	{
+		if (file_list[i].second == 0)
+			continue;
+		
+		Mat image1 = imread(file_list[i].first.c_str());
+		Mat image = imread(file_list[i].first.c_str(), 0);
+
+		Mat resizedImage = Mat(context.resizeImageSize, context.resizeImageSize, CV_8UC1);
+		resize(image, resizedImage, resizedImage.size());
+
+		string filename = file_list[i].first;
+		int filename_pos = filename.find_last_of('/');
+		filename = filename.substr(filename_pos + 1);
+		//cout << filename << endl;
+
+		const int scale = 10;
+		Mat outputImage(resizedImage.rows*scale, resizedImage.cols*scale, CV_8UC3);
+		Mat tmpImage;
+		cvtColor(resizedImage, tmpImage, CV_GRAY2RGB);
+
+		resize(tmpImage, outputImage, outputImage.size(), 0.0, 0.0, CV_INTER_NN);
+		imshow(filename, outputImage);
+		moveWindow(filename, 1000, 20);
+		imshow(filename + "_small", image);
+		moveWindow(filename + "_small", 850, 20);
+		
+		char c = waitKey(0);
+		if (c == 13)
+			imwrite("fg2/" + filename, image1);
+		else
+			imwrite("badfg2/" + filename, image1);
+		static int index = 1;
+		cout << index++ << ": " << (c == 13) << " " << filename  << endl;
+		destroyAllWindows();
+	}
+}
+
 void DebugHOGFeatures(const TFileList& file_list, const HOGContext& _context, RecognitionStatistics &stat)
 {
 	HOGContext context = _context;
@@ -667,6 +709,9 @@ TModel TrainClassifier(const string& data_file, const string &images_list, const
 	// Load list of image file names and its labels
 	LoadFileList(data_file, &file_list);
 	// Extract features from images
+	#if 0
+	DebugFGChooser(file_list, context, stat);
+	#endif
 	#if 0
 		DebugHOGFeatures(file_list, context, stat);
 	#endif
