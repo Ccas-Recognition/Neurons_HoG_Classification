@@ -52,6 +52,14 @@ namespace HOGFeatureClassifier
 		int standartslidingWindowStep;
 		int blocksNormalizationType;
 		int solver_type;
+		
+		int lf_halfSizeScanning;
+		float lf_begin_scale;
+		float lf_end_scale;
+		float lf_scale_step;
+
+		bool useFastFeatures;
+		int features_type; // 0 - HOG, 1 - cross features
 
 		HOGContext()
 		{
@@ -75,6 +83,14 @@ namespace HOGFeatureClassifier
 			standartslidingWindowStep = 4;
 			blocksNormalizationType = 1;
 			solver_type = 2;
+
+			features_type = 0;
+			useFastFeatures = true;
+			lf_halfSizeScanning = 4;
+
+			float lf_begin_scale = 0.1f;
+			float lf_end_scale = 0.3f;
+			float lf_scale_step = 0.05;
 		}
 		void Load(istream &input);
 		void Save(ostream &output)const;

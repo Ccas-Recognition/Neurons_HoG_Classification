@@ -167,7 +167,7 @@ namespace HOGFeatureClassifier
 				for (int i = 0; i < values.size(); ++i)
 				{
 					int predict_value = int(values[i] > t);
-					if (fast_values[i] < model.getFastPredictValue())
+					if ( model.GetContext().useFastFeatures && fast_values[i] < model.getFastPredictValue())
 						predict_value = 0;
 
 					if (file_list[i].second != predict_value)

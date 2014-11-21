@@ -6,14 +6,14 @@ import cv2
 ftest = open("../../data/neuron/test.txt", "w")
 ftrain = open("../../data/neuron/train.txt", "w")
 
-total_train = 1
+total_train = 0
 
 if total_train:
     training_count = 4000
     training_bg_count = 10000
 else:
-    training_bg_count = 4000
-    training_count = 1500
+    training_bg_count = 1500
+    training_count = 1000
 
 training_data_dir_txt = 'total_data/'
 training_data_dir = '../../data/neuron/training_data/'

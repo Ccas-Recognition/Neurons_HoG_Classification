@@ -103,6 +103,7 @@ lib_post_build_event.bat</Command>
     <ClCompile Include="..\..\src\HOG.cpp" />
     <ClCompile Include="..\..\src\HOG_Functor.cpp" />
     <ClCompile Include="..\..\src\ImageRecognition.cpp" />
+    <ClCompile Include="..\..\src\LaplacianFeatures.cpp" />
     <ClCompile Include="..\..\src\preprocessing.cpp" />
     <ClCompile Include="..\..\src\SlidingWindowOptimization.cpp" />
     <ClCompile Include="..\liblinear\blas\daxpy.c" />
@@ -118,6 +119,7 @@ lib_post_build_event.bat</Command>
     <ClInclude Include="..\..\src\HOG.h" />
     <ClInclude Include="..\..\src\HOG_Functor.h" />
     <ClInclude Include="..\..\src\ImageRecognition.h" />
+    <ClInclude Include="..\..\src\LaplacianFeatures.h" />
     <ClInclude Include="..\..\src\preprocessing.h" />
     <ClInclude Include="..\..\src\SlidingWindow.h" />
     <ClInclude Include="..\..\src\SlidingWindowOptimizataion.h" />

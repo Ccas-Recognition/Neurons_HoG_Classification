@@ -91,6 +91,20 @@ namespace HOGFeatureClassifier
 				input >> blocksNormalizationType;
 			else if (variable == "solver_type")
 				input >> solver_type;
+			else if (variable == "features_type")
+				input >> features_type;
+			else if (variable == "lf_halfSizeScanning")
+				input >> lf_halfSizeScanning;
+
+			else if (variable == "lf_begin_scale")
+				input >> lf_begin_scale;
+			else if (variable == "lf_end_scale")
+				input >> lf_end_scale;
+			else if (variable == "lf_scale_step")
+				input >> lf_scale_step;
+
+			else if (variable == "useFastFeatures")
+				input >> useFastFeatures;
 		}
 	}
 	void HOGContext::Save(ostream &output) const
@@ -115,6 +129,14 @@ namespace HOGFeatureClassifier
 		output << endl << "standartslidingWindowStep " << standartslidingWindowStep;
 		output << endl << "blocksNormalizationType " << blocksNormalizationType;
 		output << endl << "solver_type " << solver_type;
+		output << endl << "features_type " << features_type;
+
+		output << endl << "useFastFeatures " << useFastFeatures;
+
+		output << endl << "lf_halfSizeScanning " << lf_halfSizeScanning;
+		output << endl << "lf_begin_scale " << lf_begin_scale;
+		output << endl << "lf_end_scale " << lf_end_scale;
+		output << endl << "lf_scale_step " << lf_scale_step;
 	}
 
 	TModel::TModel() : model_(NULL) { init(); }
