@@ -304,6 +304,9 @@ float FindOptimalFastPredictValues(const TFileList& file_list, const vector< flo
 	float minValue = 1000.0f;
 	float maxValue = 0.0f;
 
+	int positives_count = 0;
+	int negatives_count = 0;
+
 	for (size_t image_idx = 0; image_idx < file_list.size(); ++image_idx)
 	{
 		#if 0
@@ -315,6 +318,12 @@ float FindOptimalFastPredictValues(const TFileList& file_list, const vector< flo
 			minValue = min(minValue, fastFeatures[image_idx]);
 		else
 			maxValue = max(maxValue, fastFeatures[image_idx]);
+
+
+		if (file_list[image_idx].second == 1)
+			++positives_count;
+		else
+			++negatives_count;
 	}
 
 	const int MAX_K = 100;
@@ -331,7 +340,6 @@ float FindOptimalFastPredictValues(const TFileList& file_list, const vector< flo
 		stat.fastPredictROC[k].value = current_thr;
 		int error1 = 0;
 		int error2 = 0;
-
 		for (size_t i = 0; i < file_list.size(); ++i)
 		{
 			if ((file_list[i].second == 0) && (fastFeatures[i] > current_thr))
@@ -339,10 +347,10 @@ float FindOptimalFastPredictValues(const TFileList& file_list, const vector< flo
 			else if ((file_list[i].second == 1) && (fastFeatures[i] < current_thr))
 				++error1;
 		}
-		float _error1 = float(error1) / file_list.size();
-		float _error2 = float(error2) / file_list.size();
-		stat.fastPredictROC[k].precision1 = 1.0f - _error1;
-		stat.fastPredictROC[k].precision2 = 1.0f - _error2;
+		float _error1 = float(error1) / positives_count;
+		float _error2 = float(error2) / negatives_count;
+		stat.fastPredictROC[k].truePositiveRate = 1.0f - _error1;
+		stat.fastPredictROC[k].falsePositiveRate = _error2;
 		if (_error1 < 0.05f)
 		{
 			optimalValue = current_thr;
@@ -775,7 +783,7 @@ void PredictData(const string& data_file,
 	int max_i = 0;
 	for (int i = stat.predictROC.size() - 1; i >= 0; --i)
 	{
-		if ((1.0f - stat.predictROC[i].precision2) < 0.000001f)
+		if (stat.predictROC[i].falsePositiveRate < 0.000001f)
 			max_i = i;
 	}
 	model.setModelThreshold( stat.predictROC[max_i].value );

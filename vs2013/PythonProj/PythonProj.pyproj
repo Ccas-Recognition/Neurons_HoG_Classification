@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>dcade8f7-0e11-45c9-858a-938e415a1260</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>train_test_picker.py</StartupFile>
+    <StartupFile>roc_curve.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -14,7 +14,7 @@
     <RootNamespace>PythonProj</RootNamespace>
     <IsWindowsApplication>False</IsWindowsApplication>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>../../data/neuron/test.txt ../../build/bin/predictions.txt</CommandLineArguments>
+    <CommandLineArguments>../../build/bin/rocs/predictROC.txt roc.png</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -30,6 +30,9 @@
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="roc_curve.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="train_test_picker.py" />
   </ItemGroup>
   <Import Condition="Exists($(PtvsTargetsFile))" Project="$(PtvsTargetsFile)" />

@@ -2,5 +2,4 @@
 cd vs2013/PythonProj
 python train_test_picker.py
 cd ../..
-train.sh
-test.sh
+all.sh

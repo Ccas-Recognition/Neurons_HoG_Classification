@@ -98,7 +98,8 @@ namespace HOGFeatureClassifier
 
 	struct ROCValue
 	{
-		float precision1, precision2;
+		float truePositiveRate;
+		float falsePositiveRate;
 		float value;
 	};
 

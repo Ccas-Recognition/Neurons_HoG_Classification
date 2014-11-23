@@ -12,11 +12,10 @@ if total_train:
     training_count = 4000
     training_bg_count = 10000
 else:
-    training_bg_count = 1500
-    training_count = 1000
+    training_bg_count = 6000
+    training_count = 200
 
 training_data_dir_txt = 'total_data/'
-training_data_dir = '../../data/neuron/training_data/'
 total_data_dir = '../../data/neuron/total_data/'
 
 def bmpToJpg(subfolder, sampling_count, label):
@@ -36,7 +35,12 @@ def bmpToJpg(subfolder, sampling_count, label):
         ftest.write(training_data_dir_txt + subfolder + file + ' ' + str(label) + '\n')
         #print([label, fileName])
 
-bmpToJpg( 'fg/', training_count, 1)
-bmpToJpg( 'bg/', training_bg_count, 0)
+if 1:
+    bmpToJpg( 'fg2/', training_count, 1)
+    bmpToJpg( 'badfg2/', training_bg_count, 0)
+    bmpToJpg( 'bg/', training_bg_count, 0)
+else:
+    bmpToJpg( 'fg/', training_count, 1)
+    bmpToJpg( 'bg/', training_bg_count, 0)
 
 print('Sampling generated. fg: %d, bg: %d'%(training_count,training_bg_count))

@@ -93,10 +93,9 @@ int main(int argc, char** argv) {
 		{
 			for (int i = 0; i < stat.fastPredictROC.size(); ++i)
 			{
-
-				output << setw(12) << (stat.fastPredictROC[i].value) << " "
-					<< setw(12) << ((1.0f - stat.fastPredictROC[i].precision1) * 100) << " "
-					<< setw(12) << ((1.0f - stat.fastPredictROC[i].precision2) * 100) << endl;
+				//output << setw(12) << (stat.fastPredictROC[i].value) << " ";
+				output << setw(12) << (stat.fastPredictROC[i].truePositiveRate) << " "
+					<< setw(12) << (stat.fastPredictROC[i].falsePositiveRate) << endl;
 					//<< setw(12) << ((stat.fastPredictROC[i].precision1)) << " "
 					//<< setw(12) << ((stat.fastPredictROC[i].precision2)) << endl;
 			}
@@ -119,16 +118,14 @@ int main(int argc, char** argv) {
 			int max_i = 0;
 			for (int i = stat.predictROC.size() - 1; i >= 0; --i)
 			{
-				if ((1.0f - stat.predictROC[i].precision2) < 0.0007f)
+				if ((stat.predictROC[i].falsePositiveRate) < 0.0007f)
 					max_i = i;
-				output << setw(12) << stat.predictROC[i].value << " " 
-					//<< setw(12) << ((stat.predictROC[i].precision1)) << " "
-					//<< setw(12) << ((stat.predictROC[i].precision2)) << endl;
-					<< setw(12) << ((1.0f - stat.predictROC[i].precision1) * 100) << " "
-					<< setw(12) << ((1.0f - stat.predictROC[i].precision2) * 100) << endl;
+				//output << setw(12) << ((stat.predictROC[i].value)) << " ";
+				output << setw(12) << ((stat.predictROC[i].truePositiveRate)) << " "
+					<< setw(12) << ((stat.predictROC[i].falsePositiveRate) ) << endl;
 			}
-			cout << setw(12) << ((1.0f - stat.predictROC[max_i].precision1) * 100) << " "
-				<< setw(12) << ((1.0f - stat.predictROC[max_i].precision2) * 100) << endl;
+			cout << setw(12) << ((stat.predictROC[max_i].truePositiveRate) ) << " "
+				<< setw(12) << ((stat.predictROC[max_i].falsePositiveRate) ) << endl;
 		}
     }
 	

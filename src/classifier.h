@@ -141,11 +141,19 @@ namespace HOGFeatureClassifier
 			float max_value = 0.0f;
 			float min_value = 0.0f;
 			double sum_value = 0.0;
+			int positives_count = 0;
+			int negatives_count = 0;
+
 			for (int i = 0; i < values.size(); ++i)
 			{
 				max_value = max(max_value, values[i]);
 				min_value = min(min_value, values[i]);
 				sum_value += double( values[i] );
+				
+				if (file_list[i].second == 1)
+					++positives_count;
+				else
+					++negatives_count;
 			}
 			stat.predictMaxValue = max_value;
 			stat.predictMinValue = min_value;
@@ -161,7 +169,7 @@ namespace HOGFeatureClassifier
 			stat.predictROC.resize(iters);
 			for (int k = 0; k < iters; ++k)
 			{
-				float t = max_value*float(k) / (iters);
+				float t = min_value + (max_value - min_value)*float(k) / (iters);
 				int error1 = 0; //1 - right, 0 - predicted
 				int error2 = 0; //0 - right, 1 - predicted
 				for (int i = 0; i < values.size(); ++i)
@@ -179,12 +187,15 @@ namespace HOGFeatureClassifier
 					}
 				}
 				float precision = float(values.size() - error1 - error2) / values.size();
-				float precision_error1 = (float(error1) / values.size());
-				float precision_error2 = (float(error2) / values.size());
+				float precision_error1 = (float(error1) / positives_count);
+				float precision_error2 = (float(error2) / negatives_count);
 				
 				stat.predictROC[k].value = t;
-				stat.predictROC[k].precision1 = 1.0f - precision_error1;
-				stat.predictROC[k].precision2 = 1.0f - precision_error2;
+				//stat.predictROC[k].precision1 = 1.0f - precision_error1;
+				//stat.predictROC[k].precision2 = 1.0f - precision_error2;
+				stat.predictROC[k].truePositiveRate = 1.0f - precision_error1;
+				stat.predictROC[k].falsePositiveRate = precision_error2;
+
 				//printf("%10f (%10f, %10f): %10f\n", precision, precision_error1, precision_error2, t);
 				//if (precision_error2 < 0.00001f)
 				//	break;
