@@ -36,15 +36,20 @@ namespace ImageRecognition
 		Mat prepImage;
 
 		clock_t begin_time = clock();
+
 		prep.do_prep(image, prepImage);
-		clock_t end_time = clock();
-		if (stat.flOutputTime)
-			cout << "Preprocessing Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
+		//if (stat.flOutputTime && false)
+		//	cout << "Preprocessing Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
 
 		ImageRecognition::SlidingWindowFragmentation fragmentation(image, prepImage, model.GetContext(), stat);
 		HOGFeatureClassifier::HoGResponseFunctor response(stat);
 		response.InitModel(&model);
 		fragmentation.FindMaximaWindows(rects, response);
+
+		clock_t end_time = clock();
+		if (stat.flOutputTime)
+			cout << "Recognition Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
+
 	}
 
 	void ReadRightRects(vector<ImageRecognition::SlidingRect> &rightRects, const string &xml_filename, RecognitionStatistics &stat)
@@ -109,7 +114,8 @@ namespace ImageRecognition
 		}
 	}
 
-	float FindOptimalThresholdForModel(const vector<ImageRecognition::SlidingRect> &rects, int &balanced_mis_count, int &false_positive_count, RecognitionStatistics &stat)
+	float FindOptimalThresholdForModel(const vector<ImageRecognition::SlidingRect> &rects, int &balanced_mis_count, int &false_positive_count,
+		int right_rects_count, int absolute_mis_count, RecognitionStatistics &stat)
 	{
 		float max_value = 0.0f;
 		for (auto it = rects.begin(); it != rects.end(); ++it)
@@ -120,12 +126,18 @@ namespace ImageRecognition
 		float min_error = 10000;
 		float min_threshold = 0.0f;
 
-		const float k1 = 0.20f;
-		const float k2 = 0.80f;
+		//const float k1 = 0.20f;
+		//const float k2 = 0.80f;
+		const float k1 = 1.0f;
+		const float k2 = 1.0f;
 
 		const int GRID_COUNT = 100;
+		stat.recognitionMissigs.resize(GRID_COUNT);
+		stat.recognitionFalseDetections.resize(GRID_COUNT);
 		for (int k = 0; k < 100; ++k)
 		{
+			float t = k / float(GRID_COUNT);
+
 			float current_threshold = k / float(GRID_COUNT)*max_value;
 			int current_mis_count = 0;
 			int current_false_positive_count = 0;
@@ -143,14 +155,20 @@ namespace ImageRecognition
 						++current_mis_count;
 				}
 			}
-			float current_error = k1*current_false_positive_count + k2*current_mis_count;
+			float current_error = k1*current_false_positive_count + k2*(current_mis_count + absolute_mis_count);
 			if (min_error > current_error)
 			{
 				min_error = current_error;
 				min_threshold = current_threshold;
 				balanced_mis_count = current_mis_count;
 				false_positive_count = current_false_positive_count;
+				stat.recognitionMinMissings = (current_mis_count + absolute_mis_count) / float(right_rects_count);
+				stat.recognitionMinFalseDetections = current_false_positive_count / float(right_rects_count);
 			}
+			stat.recognitionMissigs[k].value = t;
+			stat.recognitionMissigs[k].error = (current_mis_count + absolute_mis_count) / float(right_rects_count);
+			stat.recognitionFalseDetections[k].value = t;
+			stat.recognitionFalseDetections[k].error = current_false_positive_count / float(right_rects_count);
 		}
 		return min_threshold;
 	}
@@ -195,6 +213,8 @@ namespace ImageRecognition
 			xml_filename = dir + xml_filename;
 
 			Mat image = imread(filename, 0);
+			if (stat.flOutputInfo)
+				cout << filename << " loaded" << endl;
 			if (image.rows == 0)
 				continue;
 
@@ -219,7 +239,9 @@ namespace ImageRecognition
 		int balanced_mis_count = 0;
 		int false_positive_count = 0;
 
-		float threshold = FindOptimalThresholdForModel(rects, balanced_mis_count, false_positive_count, stat);
+		float threshold = FindOptimalThresholdForModel(rects, balanced_mis_count, false_positive_count, right_rects_count, mis_count, stat);
+		//threshold = 1.0f;
+		/*
 		if (stat.flOutputInfo)
 		{
 			float missings_optimize = float(balanced_mis_count) / right_rects_count * 100.0f;
@@ -230,7 +252,7 @@ namespace ImageRecognition
 			cout << "False Positives: " << false_positives << endl;
 			cout << "Threshold: " << threshold << endl;
 		}
-
+		*/
 		if (stat.flDumpDebugImages)
 		{
 			using Utils::int2str;
@@ -245,6 +267,7 @@ namespace ImageRecognition
 				for (int j = 0; j < check_rects[i].size(); ++j)
 				{
 					const auto& current_rect = check_rects[i][j];
+					//cout << current_rect.value << endl;
 					if (current_rect.value > threshold)
 					{
 						if (current_rect.falseDetection)

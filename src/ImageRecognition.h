@@ -102,6 +102,11 @@ namespace HOGFeatureClassifier
 		float falsePositiveRate;
 		float value;
 	};
+	struct ErrorValue
+	{
+		float error;
+		float value;
+	};
 
 	struct RecognitionStatistics
 	{
@@ -117,6 +122,11 @@ namespace HOGFeatureClassifier
 		vector<ROCValue> predictROC;
 		float predictMinValue;
 		float predictMaxValue;
+
+		float recognitionMinMissings;
+		float recognitionMinFalseDetections;
+		vector<ErrorValue> recognitionMissigs;
+		vector<ErrorValue> recognitionFalseDetections;
 
 		ostream* pInfoStream;
 

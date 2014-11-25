@@ -113,7 +113,7 @@ public:
             #endif
         }
 		clock_t end_time = clock();
-		if (stat.flOutputTime)
+		if (stat.flOutputTime && false)
 			cout << "Sliding Window Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
 		using Utils::sqr;
         for(int i=0; i<rects.size(); ++i)
@@ -162,7 +162,7 @@ public:
 		Mat prepImage = Mat(h, w, CV_8U);
 		resize(basePrepImage, prepImage, prepImage.size(), 0.0, 0.0, CV_INTER_NN);
 		
-		if (stat.flDumpDebugImages)
+		if (stat.flDumpDebugImages && false)
 		{
 			imwrite("dump/resizedImage_" + int2str(scale_index) + ".jpg", image);
 			Mat tmp = prepImage * 255;
@@ -171,7 +171,7 @@ public:
 		}
 
 		clock_t begin_time = clock();
-		if (stat.flOutputInfo)
+		if (stat.flOutputInfo && false)
 			std::cout << "Response image";
 
         response.Init( image, prepImage );
@@ -183,7 +183,7 @@ public:
 
         for( int i=0; i<responseImage.rows; ++i )
         {
-			if (stat.flOutputInfo)
+			if (stat.flOutputInfo && false)
             if((i+1)%10 == 0)
                 cout << ".";
 
@@ -197,13 +197,13 @@ public:
                 maxResponse = max(maxResponse, responseImage.at<float>(i, j));
             }
         }
-		if (stat.flOutputInfo)
+		if (stat.flOutputInfo && false)
 		{
 			cout << "*" << endl;
 			//cout << "maxResponse: " << maxResponse << endl;
 			//cout << "debug count operator: " << response.DEBUG_COUNT_OPERATOR << endl;
 		}
-		if (stat.flOutputTime)
+		if (stat.flOutputTime && false)
 		{
 			clock_t end_time = clock();
 			cout << "Response Image Time: " << (float(end_time - begin_time) / 1000.0f) << endl;

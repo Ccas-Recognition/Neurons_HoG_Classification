@@ -130,10 +130,13 @@ namespace HOGFeatureClassifier
 			#endif
 			return 0.0f;
 		}
-		float fastPredict = ComputeFastPredict(fastPredictIntegralImage, pos_x, pos_y, width, height);
-		if (fastPredict < model->getFastPredictValue()*0.3f)
+		if (model->GetContext().useFastFeatures)
 		{
-			return 0.0f;
+			float fastPredict = ComputeFastPredict(fastPredictIntegralImage, pos_x, pos_y, width, height);
+			if (fastPredict < model->getFastPredictValue()*0.3f)
+			{
+				return 0.0f;
+			}
 		}
 
 		const Mat part = modDir(Range(pos_y, pos_y + height), Range(pos_x, pos_x + width));

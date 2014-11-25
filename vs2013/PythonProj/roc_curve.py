@@ -8,12 +8,16 @@ import matplotlib.pyplot as plt
 
 def main(argv=[__name__]):
 
-    if len(sys.argv) != 3:
-        print "usage: <roc> ] <image>"
+    if len(sys.argv) != 6:
+        print "usage: <roc> <image> <graphic name> <x-axis name> <y-axis name>"
         sys.exit(0)
 
     rocfname = sys.argv[1]
     ofname = sys.argv[2]
+
+    graphic_name = sys.argv[3]
+    x_axis_name = sys.argv[4]
+    y_axis_name = sys.argv[5]
 
     f, ext = os.path.splitext(ofname)
     if not IsSupportedImageType(ext):
@@ -27,7 +31,7 @@ def main(argv=[__name__]):
 
     print("Plotting ROC Curve ...")
     color = "#008000"  # dark green
-    DepictROCCurve(tpr, fpr, "ROC Curve", color, ofname)
+    DepictROCCurve(fpr, tpr, graphic_name, x_axis_name, y_axis_name, color, ofname)
 
 def LoadROC(fname):
     sfile = open(fname, 'r')
@@ -41,21 +45,21 @@ def LoadROC(fname):
     return tpr, fpr
 
 
-def SetupROCCurvePlot(plt):
+def SetupROCCurvePlot(plt, graphic_name, x_axis_name, y_axis_name):
 
-    plt.xlabel("FPR", fontsize=14)
-    plt.ylabel("TPR", fontsize=14)
-    plt.title("ROC Curve", fontsize=14)
+    plt.xlabel(x_axis_name, fontsize=14)
+    plt.ylabel(y_axis_name, fontsize=14)
+    plt.title(graphic_name, fontsize=14)
 
 
 def SaveROCCurvePlot(plt, fname, randomline=True):
 
-    if randomline:
-        x = [0.0, 1.0]
-        plt.plot(x, x, linestyle='dashed', color='red', linewidth=2, label='random')
+    #if randomline:
+    #    x = [0.0, 1.0]
+    #    plt.plot(x, x, linestyle='dashed', color='red', linewidth=2, label='random')
 
-    plt.xlim(0.0, 1.0)
-    plt.ylim(0.0, 1.0)
+    #plt.xlim(0.0, 1.0)
+    #plt.ylim(0.0, 1.0)
     plt.legend(fontsize=10, loc='best')
     plt.tight_layout()
     plt.savefig(fname)
@@ -65,12 +69,12 @@ def AddROCCurve(plt, tpr, fpr, color, label):
     plt.plot(fpr, tpr, color=color, linewidth=2, label=label)
 
 
-def DepictROCCurve(tpr, fpr, label, color, fname, randomline=True):
+def DepictROCCurve(tpr, fpr, graphic_name, x_axis_name, y_axis_name, color, fname, randomline=True):
 
     plt.figure(figsize=(4, 4), dpi=280)
 
-    SetupROCCurvePlot(plt)
-    AddROCCurve(plt, tpr, fpr, color,label)
+    SetupROCCurvePlot(plt, graphic_name, x_axis_name, y_axis_name)
+    AddROCCurve(plt, tpr, fpr, color,graphic_name)
     SaveROCCurvePlot(plt, fname, randomline)
 
 

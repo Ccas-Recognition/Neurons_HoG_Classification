@@ -14,7 +14,7 @@
     <RootNamespace>PythonProj</RootNamespace>
     <IsWindowsApplication>False</IsWindowsApplication>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>../../build/bin/rocs/predictROC.txt roc.png</CommandLineArguments>
+    <CommandLineArguments>../../build/bin/rocs/predictROC.txt roc.png "ROC Curve" "FPR" "TPR"</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

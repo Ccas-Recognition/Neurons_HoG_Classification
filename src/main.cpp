@@ -94,8 +94,8 @@ int main(int argc, char** argv) {
 			for (int i = 0; i < stat.fastPredictROC.size(); ++i)
 			{
 				//output << setw(12) << (stat.fastPredictROC[i].value) << " ";
-				output << setw(12) << (stat.fastPredictROC[i].truePositiveRate) << " "
-					<< setw(12) << (stat.fastPredictROC[i].falsePositiveRate) << endl;
+				output << setw(12) << (stat.fastPredictROC[i].falsePositiveRate) << " "
+					<< setw(12) << (stat.fastPredictROC[i].truePositiveRate) << endl;
 					//<< setw(12) << ((stat.fastPredictROC[i].precision1)) << " "
 					//<< setw(12) << ((stat.fastPredictROC[i].precision2)) << endl;
 			}
@@ -121,11 +121,11 @@ int main(int argc, char** argv) {
 				if ((stat.predictROC[i].falsePositiveRate) < 0.0007f)
 					max_i = i;
 				//output << setw(12) << ((stat.predictROC[i].value)) << " ";
-				output << setw(12) << ((stat.predictROC[i].truePositiveRate)) << " "
-					<< setw(12) << ((stat.predictROC[i].falsePositiveRate) ) << endl;
+				output << setw(12) << ((stat.predictROC[i].falsePositiveRate)) << " "
+					<< setw(12) << ((stat.predictROC[i].truePositiveRate)) << endl;
 			}
-			cout << setw(12) << ((stat.predictROC[max_i].truePositiveRate) ) << " "
-				<< setw(12) << ((stat.predictROC[max_i].falsePositiveRate) ) << endl;
+			cout << setw(12) << ((stat.predictROC[max_i].falsePositiveRate)) << " "
+				<< setw(12) << ((stat.predictROC[max_i].truePositiveRate)) << endl;
 		}
     }
 	
@@ -134,6 +134,24 @@ int main(int argc, char** argv) {
 		string images_list = cmd.optionValue("images_set");
 
 		ImageRecognition::OptimizeThresholdsInModel(images_list, model_file, stat);
+		
+		ofstream outputMissings("rocs/recognitionMissing.txt");
+		ofstream outputFalseDetections("rocs/recognitionFalseDetections.txt");
+		if (outputMissings.is_open() && outputFalseDetections.is_open())
+		{
+			for (int i = 0; i < stat.recognitionFalseDetections.size(); ++i)
+			{
+				//output << setw(12) << ((stat.predictROC[i].value)) << " ";
+				outputFalseDetections << setw(12) << stat.recognitionFalseDetections[i].value << " "
+					<< setw(12) << stat.recognitionFalseDetections[i].error << endl;
+
+				//output << setw(12) << ((stat.predictROC[i].value)) << " ";
+				outputMissings << setw(12) << stat.recognitionMissigs[i].value << " "
+					<< setw(12) << stat.recognitionMissigs[i].error << endl;
+			}
+			cout << "missings: " << setw(12) << stat.recognitionMinMissings << ", false_detections: "
+				<< setw(12) << stat.recognitionMinFalseDetections << endl;
+		}
 	}
 	
 	if (sliding_window)
