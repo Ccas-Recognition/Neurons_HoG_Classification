@@ -87,6 +87,13 @@ int main(int argc, char** argv) {
 				context.Load(input_context);
 		}
 		ImageRecognition::TrainHOGClassifier(data_file, images_list, model_file, context, stat);
+		#ifdef WIN32
+			system("If Not Exist rocs\ mkdir rocs");
+			system("del /Q rocs");
+		#else
+			system("rm -r rocs");
+			system("mkdir rocs");
+		#endif
 		ofstream output("rocs/fastPredictROC.txt");
 
 		if (output.is_open())
@@ -111,6 +118,13 @@ int main(int argc, char** argv) {
         string prediction_file = cmd.optionValue("predicted_labels");
 		ImageRecognition::PredictData(data_file, model_file, prediction_file, stat);
 
+		#ifdef WIN32
+			system("If Not Exist rocs\ mkdir rocs");
+			system("del /Q rocs");
+		#else
+			system("rm -r rocs");
+			system("mkdir rocs");
+		#endif
 		ofstream output("rocs/predictROC.txt");
 		if (output.is_open())
 		{
