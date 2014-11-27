@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     cmd.setHelpOption("h", "help", "Print this help message");
         // Add other options
     cmd.defineOption("model", "Path to file to save or load model",
-        ArgvParser::OptionRequiresValue | ArgvParser::OptionRequired);
+        ArgvParser::OptionRequiresValue);
 	cmd.defineOption("data_set", "File with dataset",
 		ArgvParser::OptionRequiresValue);
 	cmd.defineOption("context", "Context to HOG training",
@@ -37,10 +37,13 @@ int main(int argc, char** argv) {
 		ArgvParser::OptionRequiresValue);
 	cmd.defineOption("image", "Image for sliding window",
 		ArgvParser::OptionRequiresValue);
+	cmd.defineOption("binarization_image", "Binarization Image",
+		ArgvParser::OptionRequiresValue);
 
     cmd.defineOption("train", "Train classifier");
     cmd.defineOption("predict", "Predict dataset");
 	cmd.defineOption("sliding_window", "Sliding window");
+	cmd.defineOption("binarization", "Binarization");
 	cmd.defineOption("optimize_threshold", "Optimize Model Threshold by image_list");
         
         // Add options aliases
@@ -53,6 +56,8 @@ int main(int argc, char** argv) {
 	cmd.defineOptionAlternative("image", "i");
 	cmd.defineOptionAlternative("sliding_window", "s");
 	cmd.defineOptionAlternative("optimize_threshold", "o");
+	cmd.defineOptionAlternative("binarization_image", "r");
+	cmd.defineOptionAlternative("binarization", "b");
 	cmd.defineOptionAlternative("context", "c");
         // Parse options
     int result = cmd.parse(argc, argv);
@@ -64,15 +69,16 @@ int main(int argc, char** argv) {
     }
 	
 	string image_filepath;
-	string model_file = cmd.optionValue("model");
-
+	
     bool train = cmd.foundOption("train");
     bool predict = cmd.foundOption("predict");
 	bool sliding_window = cmd.foundOption("sliding_window");
 	bool optimize_threshold = cmd.foundOption("optimize_threshold");
-
+	bool binarization = cmd.foundOption("binarization");
+	
 	if (train)
 	{
+		string model_file = cmd.optionValue("model");
 		string data_file = cmd.optionValue("data_set");
 		string images_list = "";
 		if (cmd.foundOption("images_set"))
@@ -110,6 +116,11 @@ int main(int argc, char** argv) {
 	}
     if (predict) 
 	{
+		if (!cmd.foundOption("model")) {
+			cerr << "Error! Option --model not found!" << endl;
+			return 1;
+		}
+		string model_file = cmd.optionValue("model");
 		string data_file = cmd.optionValue("data_set");
         if (!cmd.foundOption("predicted_labels")) {
             cerr << "Error! Option --predicted_labels not found!" << endl;
@@ -145,6 +156,11 @@ int main(int argc, char** argv) {
 	
 	if (optimize_threshold)
 	{
+		if (!cmd.foundOption("model")) {
+			cerr << "Error! Option --model not found!" << endl;
+			return 1;
+		}
+		string model_file = cmd.optionValue("model");
 		string images_list = cmd.optionValue("images_set");
 
 		ImageRecognition::OptimizeThresholdsInModel(images_list, model_file, stat);
@@ -170,6 +186,11 @@ int main(int argc, char** argv) {
 	
 	if (sliding_window)
 	{
+		if (!cmd.foundOption("model")) {
+			cerr << "Error! Option --model not found!" << endl;
+			return 1;
+		}
+		string model_file = cmd.optionValue("model");
 		string image_filepath = cmd.optionValue("image");
 		Mat image = imread(image_filepath, 0);
 		vector< ImageRecognition::SlidingRect > rects;
@@ -187,5 +208,16 @@ int main(int argc, char** argv) {
 			output_filepath += "_rects.jpg";
 			imwrite(output_filepath, output_image);	
 		}
+	}
+	if (binarization)
+	{
+		string image_filepath = cmd.optionValue("image");
+		string image_output_filepath = cmd.optionValue("binarization_image");
+		Mat input_image = imread(image_filepath, 0);
+		Mat output_image;
+		ImageRecognition::Binarization(input_image, output_image, stat);
+		Mat tmp = output_image * 255;
+		bitwise_not(tmp, tmp);
+		imwrite(image_output_filepath, tmp);
 	}
 }

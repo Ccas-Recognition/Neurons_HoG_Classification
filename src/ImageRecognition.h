@@ -30,6 +30,8 @@ namespace ImageRecognition
 
 	void ResponseImage(vector<SlidingRect> &rects, const Mat &image, const string &model_filename, RecognitionStatistics &stat);
 	void ResponseImage(vector<SlidingRect> &rects, const Mat &image, const HOGFeatureClassifier::TModel &model, RecognitionStatistics &stat);
+	
+	void Binarization(const Mat &inputImage, Mat &oututImage, RecognitionStatistics &stat);
 }
 
 //Additional Structures:

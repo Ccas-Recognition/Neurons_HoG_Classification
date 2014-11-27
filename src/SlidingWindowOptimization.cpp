@@ -12,6 +12,12 @@ using namespace cv;
 
 namespace ImageRecognition
 {
+	void Binarization(const Mat &inputImage, Mat &oututImage, RecognitionStatistics &stat)
+	{
+		ImageRecognition::preprocessing prep(stat);
+		prep.do_prep(inputImage, oututImage);
+	}
+	
 	void ResponseImage(vector<ImageRecognition::SlidingRect> &rects, const Mat &image, const TModel &model, RecognitionStatistics &stat)
 	{
 		GetRectsFromImage(rects, image, model, stat);
