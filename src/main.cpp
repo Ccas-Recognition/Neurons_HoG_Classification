@@ -2,6 +2,7 @@
 #include "argvparser.h"
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/ml/ml.hpp>
 #include <iomanip>
 #include <fstream>
 
@@ -10,8 +11,50 @@ using CommandLineProcessing::ArgvParser;
 using namespace cv;
 using namespace std;
 
-int main(int argc, char** argv) {
+void testKNN()
+{
+	int K = 5;
+	int BN = 100;
+	int FN = 100;
+	int N = BN + FN;
 
+	Mat trainData(N, 2, CV_32FC1);
+	Mat trainClasses(N, 1, CV_32FC1);
+	
+	for (int i = 0; i < BN; ++i)
+	{
+		float x = (i*0.1f);
+		float y = sinf(x);
+
+		trainData.at<float>(i, 0) = x;
+		trainData.at<float>(i, 1) = y;
+		trainClasses.at<float>(i, 0) = -1.0f;
+	}
+	for (int i = BN; i < N; ++i)
+	{
+		float x = ((i-BN)*0.01f);
+		float y = 0.5f + sinf(x);
+
+		trainData.at<float>(i, 0) = x;
+		trainData.at<float>(i, 1) = y;
+		trainClasses.at<float>(i, 0) =  1.0f;
+	}
+	
+	int samplesCount = 1;
+	Mat samples(samplesCount, 2, CV_32FC1);
+	samples.at<float>(0, 0) = 0.0f;
+	samples.at<float>(0, 1) = 0.25f;
+
+	Mat results(samplesCount, 1, CV_32FC1);
+	Mat neighborResponses(K, 2, CV_32FC1);
+	Mat dists(K, 2, CV_32FC1);
+	CvKNearest knn(trainData, trainClasses, Mat(), false, K);
+	knn.find_nearest(samples, K, results, neighborResponses, dists);
+}
+
+int main(int argc, char** argv) {
+	
+	//testKNN();
 	using namespace HOGFeatureClassifier;
 	RecognitionStatistics stat;
 	stat.flOutputInfo = true;
