@@ -15,7 +15,7 @@ namespace ImageFeatures
 		return -exp_value / sqr_scale + sqr_x*exp_value / (sqr_scale*sqr_scale);
 	}
 		
-	float ComputeScaleSpaceLaplacianFeature( int pos, const vector<float> &values, const HOGContext &context )
+	float ComputeScaleSpaceLaplacianFeature(int pos, const vector<float> &values, vector<float> &buffer, const HOGContext &context)
 	{
 		float max_laplacian = 0.0f;
 
@@ -33,39 +33,43 @@ namespace ImageFeatures
 			int right_last = min(mid_last + scale * 2 + 1, int(values.size() - 1));
 
 			double left_sum = 0.0;
-			double left_func_sum = 0.0;
+			int left_func_sum = 0;
 			for (int i = left_first; i <= left_last; ++i)
 			{
 				left_sum += values[i];
-				left_func_sum += 1.0;
+				left_func_sum += 1;
 			}
+			if (left_func_sum != 0)
 			left_sum /= left_func_sum;
 
 			double mid_sum = 0.0;
-			double mid_func_sum = 0.0;
+			int mid_func_sum = 0;
 			for (int i = mid_first; i <= mid_last; ++i)
 			{
 				mid_sum += values[i];
-				mid_func_sum += 1.0;
+				mid_func_sum += 1;
 			}
-			mid_sum /= mid_func_sum;
+			if (mid_func_sum != 0)
+				mid_sum /= mid_func_sum;
 
 			double right_sum = 0.0;
-			double right_func_sum = 0.0;
+			int right_func_sum = 0;
 			for (int i = right_first; i <= right_last; ++i)
 			{
 				right_sum += values[i];
-				right_func_sum += 1.0;
+				right_func_sum += 1;
 			}
-			right_sum /= right_func_sum;
+			if (right_func_sum != 0)
+				right_sum /= right_func_sum;
 
 			float laplacian = right_sum + left_sum - 2 * mid_sum;
-			if (mid_sum < right_sum || mid_sum < left_sum)
+			buffer.push_back(laplacian);
+			/*if (mid_sum < right_sum || mid_sum < left_sum)
 				continue;
 
 			if (abs(laplacian) > abs(max_laplacian))
 				max_laplacian = laplacian;
-
+			*/
 			#if DEBUG_LAPLACIAN == 1
 				cout << "Convolution " << ((scale * 2 + 1) * 3) << " " << pos <<endl;
 				//cout << left_first << " " << left_last << " " << mid_first << " " << mid_last << " " << right_first << " " << right_last << endl;

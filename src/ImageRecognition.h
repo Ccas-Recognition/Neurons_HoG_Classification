@@ -24,6 +24,7 @@ using HOGFeatureClassifier::RecognitionStatistics;
 //Main Interface:
 namespace ImageRecognition
 {
+	void KNearestHOGTest(const string& data_file, const HOGContext& context, RecognitionStatistics &stat);
 	HOGFeatureClassifier::TModel TrainHOGClassifier(const string& data_file, const string &images_list, const string& model_file, const HOGContext& context, RecognitionStatistics &stat);
 	void PredictData(const string& data_file, const string& model_file, const string& prediction_file, RecognitionStatistics &stat);
 	HOGFeatureClassifier::TModel OptimizeThresholdsInModel(const string &images_list, const string& model_file, RecognitionStatistics &stat );

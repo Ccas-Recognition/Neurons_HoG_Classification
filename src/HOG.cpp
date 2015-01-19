@@ -3,6 +3,7 @@
 #include "HOG.h"
 #include "SlidingWindowOptimizataion.h"
 #include "LaplacianFeatures.h"
+#include "DebugImageUtils.h"
 #include <sstream>
 #include <time.h>
 #include <opencv2/opencv.hpp>
@@ -188,7 +189,7 @@ void HOG(const int blockSizeX, const int blockSizeY, const int dirSegSize, const
 
 		// normalization of histograms (3.5)
 		
-		#if 1
+		#if 0
 			for (int i = 0; i < blockSizeX * blockSizeY; ++i) 
 			{
 				for (int j = 0; j < dirSegSize; j++)
@@ -397,37 +398,16 @@ void ExtractLaplacianFeaturesForSample( const Mat& image, vector<float> &feats, 
 			for (int x = 0; x < image.cols; ++x)
 				values_row[x] = float( image.at<uchar>(feat_center_y, x) );
 
-			float value_col = ImageFeatures::ComputeScaleSpaceLaplacianFeature(feat_center_y, values_col, context);
-			float value_row = ImageFeatures::ComputeScaleSpaceLaplacianFeature(feat_center_x, values_row, context);
+			float value_col = ImageFeatures::ComputeScaleSpaceLaplacianFeature(feat_center_y, values_col, buffer, context);
+			float value_row = ImageFeatures::ComputeScaleSpaceLaplacianFeature(feat_center_x, values_row, buffer, context);
 
-			mid_value_col += value_col;
-			mid_value_row += value_row;
+			//mid_value_col += value_col;
+			//mid_value_row += value_row;
 			++count;
-			if (value_col*value_row > max_value && value_col < 0.0f && value_row < 0.0f)
-			{
-				max_value = value_col*value_row;
-				
-				max_value_col = value_col;
-				max_value_row = value_row;
-				buffer.push_back(value_col);
-				buffer.push_back(value_row);
-				result_ceter_x = feat_center_x;
-				result_ceter_y = feat_center_y;
-			}
-			else
-			{
-
-				buffer.push_back(0.0f);
-				buffer.push_back(0.0f);
-			}
+			//buffer.push_back(value_col);
+			//buffer.push_back(value_row);
 		}
 	}
-	double sum = 0.0;
-	for (int i = 0; i<buffer.size(); ++i)
-		sum += buffer[i];
-	for (int i = 0; i < buffer.size(); ++i)
-		buffer[i] /= float(sum);
-
 	buildFeatures(buffer, feats, context);
 	#if 0
 	val = max_value_col*max_value_row;
@@ -671,6 +651,11 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features, const HOGC
 
 		Mat image;
 		image = imread(file_list[image_idx].first.c_str(), 0);
+		if (image.rows == 0 || image.cols == 0)
+		{
+			cout << "error in file: " << file_list[image_idx].first << endl;
+			throw "error in file";
+		}
 		resize(image, resizedImage, resizedImage.size());
 
 		features->push_back(make_pair(vector<float>(), file_list[image_idx].second));
@@ -683,9 +668,9 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features, const HOGC
 			#endif
 			ExtractFeaturesForSample(modDir, features->back().first, context, stat);
 
-			int pos_x, pos_y;
-			float value;
-			ExtractLaplacianFeaturesForSample(resizedImage, features->back().first, context, stat, pos_x, pos_y, value);
+			//int pos_x, pos_y;
+			//float value;
+			//ExtractLaplacianFeaturesForSample(resizedImage, features->back().first, context, stat, pos_x, pos_y, value);
 		}
 		else
 		{
@@ -700,6 +685,195 @@ void ExtractFeatures(const TFileList& file_list, TFeatures* features, const HOGC
 	clock_t end_time = clock();
 	if (stat.flOutputTime)
 		*stat.pInfoStream << "Extraction Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
+}
+
+void KNearestHOGTest( const string& data_file, const HOGContext& _context, RecognitionStatistics &stat)
+{
+	bool use_features = true;
+
+	HOGContext context = _context;
+
+	TFileList file_list;
+	TFeatures features;
+
+	LoadFileList(data_file, &file_list);
+
+	context.features_type = 0;
+	context.nonlinear_n = 0;
+	context.features_type = 0;
+	
+	context.blockSizesX.pop_back();
+	context.blockSizesX[0] = 4;
+	context.blockSizesY.pop_back();
+	context.blockSizesY[0] = 4;
+	/*
+	context.blockSizesX[0] = 2;
+	context.blockSizesX[1] = 4;
+	context.blockSizesY[0] = 2;
+	context.blockSizesY[1] = 4;
+	*/
+	context.lf_halfSizeScanning = 4;
+	context.lf_begin_scale = 2.0f;
+	context.lf_end_scale = 5.0f;
+	context.lf_scale_step = 1.0f;
+
+	ExtractFeatures(file_list, &features, context, stat);
+	
+	vector<Mat> images(file_list.size());
+	for (int i = 0; i < file_list.size(); ++i)
+	{
+		Mat resizedImage(24, 24, CV_8UC1);
+		Mat image = imread(file_list[i].first.c_str(), 0);
+		resize(image, resizedImage, resizedImage.size());
+		images[i] = resizedImage;
+	}
+
+	if (features.size() == 0)
+		return;
+	int featureSize;
+	if (use_features) 
+		featureSize = features[0].first.size();
+	else
+		featureSize = 24*24;
+
+	cout << "Feature Size: " << featureSize << endl;
+	Mat trainData(features.size(), featureSize+1, CV_32FC1);
+	Mat samplesData(features.size(), featureSize+1, CV_32FC1);
+	Mat trainClasses(features.size(), 1, CV_32FC1);
+
+	ofstream debugOutput("debug.txt");
+	for (int i = 0; i < features.size(); ++i)
+	{
+		const Mat& resizedImage = images[i];
+		for (int j = 0; j < featureSize; ++j)
+		{
+			if (use_features)
+			{
+				trainData.at<float>(i, j) = features[i].first[j];
+				samplesData.at<float>(i, j) = features[i].first[j];
+				debugOutput << trainData.at<float>(i, j) << " ";
+			}
+			else
+			{
+				trainData.at<float>(i, j) = (float)resizedImage.at<uchar>(j / resizedImage.cols, j%resizedImage.cols);
+				samplesData.at<float>(i, j) = trainData.at<float>(i, j);
+			}
+		}
+		trainData.at<float>(i, featureSize) = float(i)*1e-15;
+		int check_index = int(trainData.at<float>(i, featureSize)*1e15 + 0.5f);
+		if (check_index != i)
+			throw "Incorrect index!";
+		samplesData.at<float>(i, featureSize) = 0.0f;
+		trainClasses.at<float>(i, 0) = float(features[i].second);
+		debugOutput << ": " << trainClasses.at<float>(i, 0) << endl;
+	}
+	int K = 10;
+	Mat results(features.size(), 1, CV_32FC1);
+	Mat neighborResponses(features.size(), K, CV_32FC1);
+	Mat dists(features.size(), K, CV_32FC1);
+
+	clock_t begin_time = clock();
+
+	CvKNearest knn(trainData, trainClasses, Mat(), false, K);
+
+	clock_t end_time = clock();
+	if (stat.flOutputTime)
+		*stat.pInfoStream << "Train KNNearest Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
+
+	begin_time = clock();
+	
+	vector<const float*> neighborsLinks(features.size()*K);
+
+	//knn.find_nearest(samplesData, K, results, neighborResponses, dists);
+	knn.find_nearest(samplesData, K, &results, &(neighborsLinks[0]), &neighborResponses, &dists);
+	end_time = clock();
+	if (stat.flOutputTime)
+		*stat.pInfoStream << "KNNearest Matching Time: " << (float(end_time - begin_time) / 1000.0f) << endl;
+
+	int dump_k = 9;
+
+	Utils::ImageClusterDumping fgTrueDump("dump/fg_true", 24, 24, 100, 100);
+	Utils::ImageClusterDumping bgTrueDump("dump/bg_true", 24, 24, 100, 100);
+
+	Utils::ImageWithNeighborsClusterDumping fgNNTrueDump("dump/fg_true_neighbors", 24, 24, 100, 10, K - 1);
+	Utils::ImageWithNeighborsClusterDumping bgNNTrueDump("dump/bg_true_neighbors", 24, 24, 100, 10, K - 1);
+
+	for (int k = 2; k < K; ++k)
+	{
+		int error = 0;
+		int errorBgTrueFgPredicted = 0;
+		int errorFgTrueBgPredicted = 0;
+		int bgCount = 0;
+		int fgCount = 0;
+		for (int i = 0; i < results.rows; ++i)
+		{
+			#if 0
+			//if (int(results.at<float>(i, 0)) != features[i].second)
+			if (int(neighborResponses.at<float>(i, 0)) != features[i].second)
+				++error;
+			debugOutput << int(neighborResponses.at<float>(i, 0)) << " " << features[i].second << endl;
+			#else
+			if (features[i].second == 1)
+				++fgCount;
+			else
+				++bgCount;
+
+			float res = 0.0f;
+			for (int j = 1; j < k; ++j)
+			{
+				res += neighborResponses.at<float>(i, j);
+				debugOutput << neighborResponses.at<float>(i, j) << " ";
+			}
+			debugOutput << ": " << features[i].second << endl;
+
+			res /= k - 1;
+			int sample_type = int(res > 0.5f);
+			if (sample_type != features[i].second)
+			{
+				++error;
+				if (k == dump_k)
+				{
+					vector<const Mat*> neighbors(K-1);
+					vector<int> neighborsLabels(K-1);
+					for (int j = 1; j < K; ++j)
+					{
+						int neighborIndex = int(neighborsLinks[i*K + j][featureSize] * 1e15 + 0.5f);
+						neighbors[j - 1] = &(images[neighborIndex]);
+						neighborsLabels[j - 1] = features[neighborIndex].second;
+					}
+
+					if (features[i].second == 1)
+					{
+						fgTrueDump.Pushimage(images[i]);
+						fgNNTrueDump.Pushimage(images[i], neighbors, neighborsLabels);
+					}
+					else
+					{
+						bgTrueDump.Pushimage(images[i]);
+						bgNNTrueDump.Pushimage(images[i], neighbors, neighborsLabels);
+					}
+				}
+				if (features[i].second == 1)
+					++errorFgTrueBgPredicted;
+				else
+					++errorBgTrueFgPredicted;
+			}
+			#endif
+		}
+		if (k == dump_k)
+		{
+			fgTrueDump.DumpOthers();
+			bgTrueDump.DumpOthers();
+			fgNNTrueDump.DumpOthers();
+			bgNNTrueDump.DumpOthers();
+
+			cout << "bgCount: " << bgCount << ", fg predicted: " << errorBgTrueFgPredicted << endl;
+			cout << "fgCount: " << fgCount << ", bg predicted: " << errorFgTrueBgPredicted << endl;
+		}
+		cout << "k=" << k << ": " << (1.0f - float(error) / features.size()) << endl;
+		cout << "\t"  << "Bg True, Fg Predicted: " << (float(errorBgTrueFgPredicted) / bgCount) << endl;
+		cout << "\t" << "Fg True, Bg Predicted: " << (float(errorFgTrueBgPredicted) / fgCount) << endl << endl;
+	}
 }
 
 // Train SVM classifier using data from 'data_file' and save trained model

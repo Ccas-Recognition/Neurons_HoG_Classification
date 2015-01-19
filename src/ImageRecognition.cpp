@@ -15,6 +15,11 @@ namespace ImageRecognition
 		return HOGFeatureClassifier::TrainClassifier(data_file, images_list, model_file, context, stat);
 	}
 
+	void KNearestHOGTest(const string& data_file, const HOGContext& context, RecognitionStatistics &stat)
+	{
+		HOGFeatureClassifier::KNearestHOGTest(data_file, context, stat);
+	}
+
 	void PredictData(const string& data_file, const string& model_file, const string& prediction_file,	RecognitionStatistics &stat)
 	{
 		HOGFeatureClassifier::PredictData(data_file, model_file, prediction_file, stat);

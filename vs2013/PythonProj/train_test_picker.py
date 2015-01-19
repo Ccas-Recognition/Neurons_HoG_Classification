@@ -9,8 +9,10 @@ ftrain = open("../../data/neuron/train.txt", "w")
 total_train = 1
 
 if total_train:
-    training_count = 5000
-    training_bg_count = 9000
+    training_count = 10000
+    training_bg_count = 10000
+    #training_count = 5000
+    #training_bg_count = 9000
 else:
     training_bg_count = 6000
     training_count = 200

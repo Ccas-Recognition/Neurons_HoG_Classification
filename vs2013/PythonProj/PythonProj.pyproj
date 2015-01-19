@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>dcade8f7-0e11-45c9-858a-938e415a1260</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>roc_curve.py</StartupFile>
+    <StartupFile>train_test_picker.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>

@@ -98,5 +98,8 @@
     <ClInclude Include="..\..\src\LaplacianFeatures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\DebugImageUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

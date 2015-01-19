@@ -14,11 +14,11 @@ using namespace std;
 void testKNN()
 {
 	int K = 5;
-	int BN = 100;
+	int BN = 100000;
 	int FN = 100;
 	int N = BN + FN;
 
-	Mat trainData(N, 2, CV_32FC1);
+	Mat trainData(N, 3, CV_32FC1);
 	Mat trainClasses(N, 1, CV_32FC1);
 	
 	for (int i = 0; i < BN; ++i)
@@ -28,6 +28,7 @@ void testKNN()
 
 		trainData.at<float>(i, 0) = x;
 		trainData.at<float>(i, 1) = y;
+		trainData.at<float>(i, 2) = float(i)*1e-15;
 		trainClasses.at<float>(i, 0) = -1.0f;
 	}
 	for (int i = BN; i < N; ++i)
@@ -37,24 +38,38 @@ void testKNN()
 
 		trainData.at<float>(i, 0) = x;
 		trainData.at<float>(i, 1) = y;
+		trainData.at<float>(i, 2) = float(i)*1e-15;
 		trainClasses.at<float>(i, 0) =  1.0f;
 	}
 	
 	int samplesCount = 1;
-	Mat samples(samplesCount, 2, CV_32FC1);
-	samples.at<float>(0, 0) = 0.0f;
-	samples.at<float>(0, 1) = 0.25f;
+	Mat samples(samplesCount, 3, CV_32FC1);
+	samples.at<float>(0, 0) = 10000.0f;
+	samples.at<float>(0, 1) = 0.0f;
+	samples.at<float>(0, 2) = 0.0f;
 
 	Mat results(samplesCount, 1, CV_32FC1);
-	Mat neighborResponses(K, 2, CV_32FC1);
-	Mat dists(K, 2, CV_32FC1);
+	Mat neighborResponses(K, 1, CV_32FC1);
+	Mat dists(K, 1, CV_32FC1);
 	CvKNearest knn(trainData, trainClasses, Mat(), false, K);
-	knn.find_nearest(samples, K, results, neighborResponses, dists);
+	
+	vector<const float*> neighbors(samplesCount*K);
+	knn.find_nearest(samples, K, &results, &(neighbors[0]), &neighborResponses, &dists);
+	const float* begin_inter = trainData.ptr<float>();
+	for (int i = 0; i < samplesCount; ++i)
+	{
+		for (int j = 0; j < K; ++j)
+		{
+			float index = (neighbors[i*K + j][2]*float(1e15)+0.5f);
+			cout << index << endl;
+		}
+	}
 }
 
 int main(int argc, char** argv) {
 	
 	//testKNN();
+	//return 0;
 	using namespace HOGFeatureClassifier;
 	RecognitionStatistics stat;
 	stat.flOutputInfo = true;
@@ -83,6 +98,7 @@ int main(int argc, char** argv) {
 	cmd.defineOption("binarization_image", "Binarization Image",
 		ArgvParser::OptionRequiresValue);
 
+	cmd.defineOption("knn", "Test by k-NearestNeighbors");
     cmd.defineOption("train", "Train classifier");
     cmd.defineOption("predict", "Predict dataset");
 	cmd.defineOption("sliding_window", "Sliding window");
@@ -102,6 +118,7 @@ int main(int argc, char** argv) {
 	cmd.defineOptionAlternative("binarization_image", "r");
 	cmd.defineOptionAlternative("binarization", "b");
 	cmd.defineOptionAlternative("context", "c");
+	cmd.defineOptionAlternative("knn", "k");
         // Parse options
     int result = cmd.parse(argc, argv);
 
@@ -118,7 +135,21 @@ int main(int argc, char** argv) {
 	bool sliding_window = cmd.foundOption("sliding_window");
 	bool optimize_threshold = cmd.foundOption("optimize_threshold");
 	bool binarization = cmd.foundOption("binarization");
+	bool knn= cmd.foundOption("knn");
 	
+	if (knn)
+	{
+		string data_file = cmd.optionValue("data_set");
+		HOGContext context;
+		if (cmd.foundOption("context"))
+		{
+			string context_file = cmd.optionValue("context");
+			ifstream input_context(context_file);
+			if (input_context.is_open())
+				context.Load(input_context);
+		}
+		ImageRecognition::KNearestHOGTest(data_file, context, stat);
+	}
 	if (train)
 	{
 		string model_file = cmd.optionValue("model");

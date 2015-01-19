@@ -8,7 +8,7 @@ using HOGFeatureClassifier::HOGContext;
 
 namespace ImageFeatures
 {
-	float ComputeScaleSpaceLaplacianFeature( int pos, const vector<float> &values, const HOGContext &context );
+	float ComputeScaleSpaceLaplacianFeature(int pos, const vector<float> &values, vector<float> &buffer, const HOGContext &context);
 }
 
 #endif // LAPLACIAN_FEATURES_H
