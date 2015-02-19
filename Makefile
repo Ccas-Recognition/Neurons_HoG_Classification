@@ -13,21 +13,10 @@ CXXFLAGS += -Werror -Wformat-security -Wignored-qualifiers -Winit-self \
 
 # Directory, containing what to need to compile
 SRC_DIR = vs2013
-INCLUDE_DIR = /usr/local/include
+LIBLINEAR_DIR = $(SRC_DIR)/liblinear
+ARGV_DIR = $(SRC_DIR)/argvparser
+INCLUDE_DIR = /usr/local/include $(ARGV_DIR) $(LIBLINEAR_DIR)
 LIB_DIR = /usr/local/lib
-
-BUILD_DIR = build
-OBJ_DIR = $(BUILD_DIR)/obj
-BIN_DIR = $(BUILD_DIR)/bin
-DEP_DIR = $(BUILD_DIR)/deps
-
-# Bridge - place for main project to pull headers and compiled libraries.
-# Headers must be placed into BRIDGE_LIBRARY_DIR before dependency generation
-# proceed. Libraries in BRIDGE_LIBRARY_DIR will be required on linkage step.
-BRIDGE_PATH = $(SRC_DIR)/bridge
-BRIDGE_MAKE = $(BRIDGE_PATH)/Makefile
-BRIDGE_INCLUDE_DIR = BRIDGE_PATH/include
-BRIDGE_LIBRARY_DIR = BRIDGE_PATH/lib
 
 # Which libraries to prepare for usage: targets must be defined in BRIDGE_MAKE.
 # easybmp replaced with opencv
@@ -35,12 +24,12 @@ BRIDGE_TARGETS = argvparser liblinear
 
 # Link libraries gcc flag: library will be searched with prefix "lib".
 OPENCV_FLAGS = -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_objdetect -lopencv_ml
-LDFLAGS = -leasybmp -largvparser -llinear $(OPENCV_FLAGS)
+LDFLAGS = $(OPENCV_FLAGS)
 
 # Add headers dirs to gcc search path
-CXXFLAGS += -I $(INCLUDE_DIR) -I $(BRIDGE_INCLUDE_DIR)
+CXXFLAGS += -I $(INCLUDE_DIR)
 # Add path with compiled libraries to gcc search path
-CXXFLAGS += -L $(BRIDGE_LIBRARY_DIR)
+CXXFLAGS += -L $(LIB_DIR)
 
 # Helper macros
 # subst is sensitive to leading spaces in arguments.
@@ -60,45 +49,11 @@ OBJFILES := $(call src_to_obj, $(CXXFILES))
 
 # Alias to make all targets.
 .PHONY: all
-all: $(BIN_DIR)
+all: $(CXXFILES) $(OBJFILES)
+	$(CXX) $(CXXFLAGS) $(CXXFILES) $(OBJFILES) $(filter %.o, $^) -o $@ $(LDFLAGS)
 
 # Suppress makefile rebuilding.
 Makefile: ;
-
-# "Hack" to restrict order of actions:
-# 1. Make bridge files target.
-# 2. Generate and include dependency information.
-ifneq ($(MAKECMDGOALS), clean)
--include bridge.touch
-endif
-
-# bridge.touch contains redirect to dependency generation Makefile.
-bridge.touch: $(wildcard $(BRIDGE_INCLUDE_DIR)/*) \
-	$(wildcard $(BRIDGE_LIBRARY_DIR)/*) \
-	mkdir -p $(BRIDGE_INCLUDE_DIR) $(BRIDGE_LIBRARY_DIR) \
-	make -C $(dir $(BRIDGE_MAKE)) -f $(notdir $(BRIDGE_MAKE)) $(BRIDGE_TARGETS) \
-	mkdir -p $(OBJ_DIR) $(BIN_DIR) $(DEP_DIR) \
-	echo "include deps.mk" > $@
-
-# Rules for compiling targets
-$(BIN_DIR): $(OBJFILES) bridge.touch
-	$(CXX) $(CXXFLAGS) $(filter %.o, $^) -o $@ $(LDFLAGS)
-
-# Pattern for generating dependency description files (*.d)
-$(DEP_DIR)/%.d: $(SRC_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -E -MM -MT $(call src_to_obj, $<) -MT $@ -MF $@ $<
-
-# Pattern for compiling object files (*.o)
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -c -o $(call src_to_obj, $<) $<
-
-# Fictive target
-.PHONY: clean
-# Delete all temprorary and binary files
-clean:
-	make -C $(dir $(BRIDGE_MAKE)) -f $(notdir $(BRIDGE_MAKE)) clean
-	rm -rf $(BUILD_DIR) $(BRIDGE_INCLUDE_DIR) $(BRIDGE_LIBRARY_DIR)
-	rm -f bridge.touch
 
 # If you still have "WTF?!" feeling, try reading teaching book
 # by Mashechkin & Co. http://unicorn.ejudge.ru/instr.pdf
